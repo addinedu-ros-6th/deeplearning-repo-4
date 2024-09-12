@@ -15,18 +15,24 @@ def handle_receive(client_socket):
         except Exception as e :
             print (f"error!{e}")
             break
-        print(response)
+        print("server to", response)
 
+    
 def handle_send(client_socket) :
     while True :
-        message = input(">>>")
+        message = input()
         if message =="exit" :
             print("disconnect!")
             break
-        elif message == "":
+        elif message == "" :
             continue
-        client_socket.sendall(message.encode('utf-8'))
         
+        #elif message.startswith("sendto") :
+        #    print(f"sendto{}")
+      #--------------------------------------------------          
+        client_socket.sendall(message.encode('utf-8'))
+      #--------------------------------------------------
+      #  
 
 def start_client():
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
