@@ -48,7 +48,7 @@
      <x>20</x>
      <y>60</y>
      <width>471</width>
-     <height>61</height>
+     <height>41</height>
     </rect>
    </property>
    <property name="text">
@@ -68,24 +68,11 @@
     <string>bottom</string>
    </property>
   </widget>
-  <widget class="QLabel" name="spectrum_image2">
-   <property name="geometry">
-    <rect>
-     <x>30</x>
-     <y>250</y>
-     <width>471</width>
-     <height>61</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>spectrum</string>
-   </property>
-  </widget>
   <widget class="QPushButton" name="color_select1">
    <property name="geometry">
     <rect>
-     <x>0</x>
-     <y>140</y>
+     <x>30</x>
+     <y>120</y>
      <width>71</width>
      <height>31</height>
     </rect>
@@ -139,134 +126,17 @@
     <enum>QFrame::Raised</enum>
    </property>
   </widget>
-  <widget class="QPushButton" name="color_select1_3">
+  <widget class="QLabel" name="spectrum_image2">
    <property name="geometry">
     <rect>
-     <x>90</x>
-     <y>140</y>
-     <width>71</width>
-     <height>31</height>
+     <x>30</x>
+     <y>260</y>
+     <width>471</width>
+     <height>41</height>
     </rect>
    </property>
    <property name="text">
-    <string>button</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="color_select1_4">
-   <property name="geometry">
-    <rect>
-     <x>170</x>
-     <y>140</y>
-     <width>71</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>button</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="color_select1_5">
-   <property name="geometry">
-    <rect>
-     <x>250</x>
-     <y>140</y>
-     <width>71</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>button</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="color_select1_6">
-   <property name="geometry">
-    <rect>
-     <x>330</x>
-     <y>140</y>
-     <width>71</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>button</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="color_select1_7">
-   <property name="geometry">
-    <rect>
-     <x>410</x>
-     <y>140</y>
-     <width>71</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>button</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="color_select1_8">
-   <property name="geometry">
-    <rect>
-     <x>490</x>
-     <y>140</y>
-     <width>71</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>button</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="color_select1_9">
-   <property name="geometry">
-    <rect>
-     <x>570</x>
-     <y>140</y>
-     <width>71</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>button</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="color_select1_10">
-   <property name="geometry">
-    <rect>
-     <x>640</x>
-     <y>140</y>
-     <width>71</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>button</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="color_select1_11">
-   <property name="geometry">
-    <rect>
-     <x>570</x>
-     <y>140</y>
-     <width>71</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>button</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="color_select1_12">
-   <property name="geometry">
-    <rect>
-     <x>640</x>
-     <y>140</y>
-     <width>71</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>button</string>
+    <string>spectrum</string>
    </property>
   </widget>
  </widget>

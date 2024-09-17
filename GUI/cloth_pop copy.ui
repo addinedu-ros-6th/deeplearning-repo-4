@@ -48,7 +48,7 @@
      <x>20</x>
      <y>60</y>
      <width>471</width>
-     <height>61</height>
+     <height>21</height>
     </rect>
    </property>
    <property name="text">
@@ -68,24 +68,11 @@
     <string>bottom</string>
    </property>
   </widget>
-  <widget class="QLabel" name="spectrum_image2">
-   <property name="geometry">
-    <rect>
-     <x>30</x>
-     <y>250</y>
-     <width>471</width>
-     <height>61</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>spectrum</string>
-   </property>
-  </widget>
   <widget class="QPushButton" name="color_select1">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>130</y>
+     <x>10</x>
+     <y>110</y>
      <width>89</width>
      <height>25</height>
     </rect>
@@ -105,6 +92,19 @@
    </property>
    <property name="text">
     <string>button</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="spectrum_image2">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>260</y>
+     <width>471</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>spectrum</string>
    </property>
   </widget>
  </widget>

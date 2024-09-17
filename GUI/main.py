@@ -1,9 +1,62 @@
 from PyQt5 import uic
-from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QLabel, QDialogButtonBox, QFrame, QPushButton
-from PyQt5.QtGui import QPixmap, QImage, QColor
-from PyQt5.QtCore import QTimer
+from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QLabel, QDialogButtonBox, QPushButton
+from PyQt5.QtGui import QPixmap, QImage
+from PyQt5.QtCore import QTimer, QThread, pyqtSignal
 import cv2
 import sys
+import socket
+import pickle
+import struct
+import os 
+import datetime 
+
+MAX_DGRAM = 65507  # UDP의 최대 패킷 크기
+
+class VideoReceiver(QThread):
+    frame_received = pyqtSignal(QImage, str)  # 프레임이 수신될 때 신호를 발생시킴
+
+    def __init__(self, udp_ip, udp_port, label_name):
+        super().__init__()
+        self.udp_ip = udp_ip
+        self.udp_port = udp_port
+        self.label_name = label_name
+        
+        # 소켓 생성 및 SO_REUSEADDR 설정
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # 포트 재사용 설정
+        self.socket.bind(('0.0.0.0', self.udp_port))  # 해당 IP와 포트에 바인딩
+        self.running = True
+        self.buffer = b""  # 데이터를 받을 버퍼
+
+    def run(self):
+        while self.running:
+            try:
+                chunk, _ = self.socket.recvfrom(MAX_DGRAM)  # 데이터 수신
+                is_last_chunk = struct.unpack("B", chunk[:1])[0]  # 첫 번째 바이트로 마지막 청크 여부 확인
+                self.buffer += chunk[1:]  # 첫 번째 바이트 제외하고 버퍼에 추가
+
+                if is_last_chunk:  # 마지막 청크라면
+                    frame = pickle.loads(self.buffer)  # 버퍼에서 프레임 복원
+                    self.buffer = b""  # 버퍼 초기화
+
+                    # OpenCV의 BGR 포맷을 RGB로 변환
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+                    # QImage로 변환
+                    h, w, ch = frame.shape
+                    bytes_per_line = ch * w
+                    q_img = QImage(frame.data, w, h, bytes_per_line, QImage.Format_RGB888)
+
+                    # QLabel 업데이트
+                    self.frame_received.emit(q_img, self.label_name)  # 신호 발생, QLabel에 전달
+
+            except Exception as e:
+                print(f"영상 수신 오류: {e}")
+
+    def stop(self):
+        self.running = False  # 스레드 종료
+        self.socket.close()
+        self.wait()
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -21,7 +74,7 @@ class MainWindow(QMainWindow):
             self.btn_airport_info.clicked.connect(self.show_airport_info)
 
         if self.btn_find_man is not None:
-            self.btn_find_man.clicked.connect(self.show_find_man)
+            self.btn_find_man.clicked.connect(self.show_input_face)
 
     # air_port_info 창 열기
     def show_airport_info(self):
@@ -29,57 +82,20 @@ class MainWindow(QMainWindow):
         uic.loadUi('GUI/air_port_info.ui', self.airport_info_window)
         self.airport_info_window.show()
 
-    # find_man 창 열기 및 웹캠 실행
-    def show_find_man(self):
-        self.find_man_window = FindManWindow()  # QMainWindow 사용
-        self.find_man_window.show()
-
-class FindManWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-
-        # find_man.ui 파일 로드
-        uic.loadUi('GUI/find_man.ui', self)
-
-        # QLabel 찾기 (QLabel의 이름은 'goose_video1')
-        self.webcam_label = self.findChild(QLabel, 'goose_video1')
-
-        # OpenCV를 사용하여 웹캠 연결
-        self.cap = cv2.VideoCapture(0)
-
-        # QTimer 설정하여 주기적으로 프레임 업데이트
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.update_frame)
-        self.timer.start(30)  # 30ms마다 업데이트
-
-        # 창이 열리면 바로 input_face 다이얼로그 띄우기
-        self.show_input_face_dialog()
-
-    # 웹캠 프레임을 QLabel에 업데이트
-    def update_frame(self):
-        ret, frame = self.cap.read()
-        if ret:
-            # OpenCV에서 BGR로 가져온 이미지를 RGB로 변환
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-            # OpenCV 프레임을 QImage로 변환
-            h, w, ch = frame.shape
-            bytes_per_line = ch * w
-            qimg = QImage(frame.data, w, h, bytes_per_line, QImage.Format_RGB888)
-
-            # QLabel에 QPixmap으로 변환한 이미지 표시
-            self.webcam_label.setPixmap(QPixmap.fromImage(qimg))
-
-    # 창 닫을 때 웹캠 해제
-    def closeEvent(self, event):
-        self.cap.release()  # 웹캠 해제
-        self.timer.stop()
-        event.accept()
-
-    # input_face 다이얼로그 열기
-    def show_input_face_dialog(self):
+    # input_face 창 열기 및 사람찾기 버튼 클릭 시 실행
+    def show_input_face(self):
         self.input_face_dialog = InputFaceDialog()
         self.input_face_dialog.exec_()
+
+        if self.input_face_dialog.isHidden():
+            self.show_find_man()
+
+    # find_man 창 열기
+    def show_find_man(self):
+        print("show_find_man 호출됨")
+        self.find_man_window = FindManWindow()
+        self.find_man_window.show()  # show()로 창을 띄움
+
 
 class InputFaceDialog(QDialog):
     def __init__(self):
@@ -88,20 +104,93 @@ class InputFaceDialog(QDialog):
         # input_face.ui 파일 로드
         uic.loadUi('GUI/input_face.ui', self)
 
-        # QDialogButtonBox 찾기
-        self.dialog_button_box = self.findChild(QDialogButtonBox, 'register_button')  # register_button은 QDialogButtonBox
+        # QLabel 찾기 (QLabel의 이름은 'input_video')
+        self.webcam_label = self.findChild(QLabel, 'input_video')
 
-        # OK 버튼 누르면 cloth_pop 다이얼로그 열기
-        if self.dialog_button_box is not None:
-            self.dialog_button_box.accepted.connect(self.show_cloth_pop_dialog)
-        else:
-            print("QDialogButtonBox를 찾지 못했습니다.")
+        # OpenCV를 사용하여 웹캠 연결
+        self.cap = cv2.VideoCapture(0)
+
+        # 얼굴 인식을 위한 Haar Cascade XML 파일 경로 설정
+        self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
+        # QTimer 설정하여 주기적으로 프레임 업데이트
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_frame)
+        self.timer.start(30)  # 30ms마다 업데이트
+        
+    def accept(self):
+        self.clean_up()
+        super().accept()
+
+    def reject(self):
+        self.clean_up()
+        super().reject()
+
+    def clean_up(self):
+        # 스레드 및 소켓 해제, 타이머 중지
+        self.cap.release()  # 웹캠 해제
+        self.timer.stop()
+
+    # 창 닫을 때 웹캠 해제
+    def closeEvent(self, event):
+        self.clean_up()  # 자원 해제
+        event.accept()
+
+    # 웹캠 프레임을 QLabel에 업데이트하고 얼굴 인식 후 저장
+    def update_frame(self):
+        ret, frame = self.cap.read()
+        if ret:
+            # 얼굴 인식
+            gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            faces = self.face_cascade.detectMultiScale(gray_frame, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+
+            # 얼굴이 인식되면 사각형 그리기 및 얼굴 저장
+            if len(faces) > 0:
+                for (x, y, w, h) in faces:
+                    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                    face_frame = frame[y:y+h, x:x+w]  # 얼굴 영역만 잘라서 저장
+                    self.save_face_image(face_frame)  # 얼굴 저장 함수 호출
+
+                # 얼굴이 인식되고 저장되면 OK 버튼 누른 것처럼 cloth_pop 창 열기
+                self.timer.stop()  # 타이머 중지 (더 이상 얼굴 탐지하지 않도록)
+                self.cap.release()  # 카메라 해제
+                self.show_cloth_pop_dialog()
+
+            # OpenCV 프레임을 QImage로 변환
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            h, w, ch = frame.shape
+            bytes_per_line = ch * w
+            qimg = QImage(frame.data, w, h, bytes_per_line, QImage.Format_RGB888)
+
+            # QLabel에 QPixmap으로 변환한 이미지 표시
+            self.webcam_label.setPixmap(QPixmap.fromImage(qimg))
+
+    # 얼굴 이미지 저장
+    def save_face_image(self, frame):
+        save_dir = os.path.expanduser('./GUI')
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+
+        # 타임스탬프를 이용해 파일명 생성
+        timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+        file_path = os.path.join(save_dir, f'face_{timestamp}.jpg')
+
+        # 이미지 저장
+        cv2.imwrite(file_path, frame)
+        print(f"얼굴 이미지가 {file_path}에 저장되었습니다.")
 
     # cloth_pop 다이얼로그 열기
     def show_cloth_pop_dialog(self):
-        print("show_cloth_pop_dialog 호출됨")
         self.cloth_pop_dialog = ClothPopDialog()
-        self.cloth_pop_dialog.show()  # show()로 창을 띄움
+        self.cloth_pop_dialog.exec_()  # exec_()로 다이얼로그 띄움
+        self.close()
+
+    # 창 닫을 때 웹캠 해제
+    def closeEvent(self, event):
+        self.cap.release()  # 웹캠 해제
+        self.timer.stop()
+        event.accept()
+
 
 class ClothPopDialog(QDialog):
     def __init__(self):
@@ -110,71 +199,61 @@ class ClothPopDialog(QDialog):
         # cloth_pop.ui 파일 로드
         uic.loadUi('GUI/cloth_pop.ui', self)
 
-        # QLabel 찾기 (이름: spectrum_image1, spectrum_image2)
-        self.spectrum_image1 = self.findChild(QLabel, 'spectrum_image1')
-        self.spectrum_image2 = self.findChild(QLabel, 'spectrum_image2')
+        # QDialogButtonBox 찾기
+        self.dialog_button_box = self.findChild(QDialogButtonBox, 'register_button')
 
-        # 선택한 색상을 미리보기할 QFrame 찾기 (이름: color1, color2)
-        self.color_frame1 = self.findChild(QFrame, 'color1')
-        self.color_frame2 = self.findChild(QFrame, 'color2')
+        # OK 버튼 누르면 find_man 창 열기
+        if self.dialog_button_box is not None:
+            self.dialog_button_box.accepted.connect(self.show_find_man)
 
-        # color_frame1, color_frame2가 제대로 로드되었는지 확인
-        if self.color_frame1 is None or self.color_frame2 is None:
-            print("color1 또는 color2 프레임을 찾을 수 없습니다. UI 파일을 확인하세요.")
-        else:
-            print("color1 및 color2 프레임을 성공적으로 찾았습니다.")
 
-        # spectrum.png 이미지를 QLabel에 삽입
-        self.pixmap = QPixmap('GUI/spectrum.png')
-        if self.spectrum_image1 is not None:
-            self.spectrum_image1.setPixmap(self.pixmap)
-        if self.spectrum_image2 is not None:
-            self.spectrum_image2.setPixmap(self.pixmap)
+class FindManWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
 
-        # QLabel 클릭 이벤트를 위한 마우스 이벤트 필터 설정
-        self.spectrum_image1.mousePressEvent = self.get_color_from_spectrum1
-        self.spectrum_image2.mousePressEvent = self.get_color_from_spectrum2
+        # find_man.ui 파일 로드
+        uic.loadUi('GUI/find_man.ui', self)
 
-    # 스펙트럼 1에서 클릭한 위치의 색상 추출 (color1에 반영)
-    def get_color_from_spectrum1(self, event):
-        x = event.pos().x()
-        y = event.pos().y()
+        # QLabel 찾기 (QLabel의 이름은 'goose_video1', 'goose_video2', 'goose_video3')
+        self.goose_video1 = self.findChild(QLabel, 'goose_video1')
+        self.goose_video2 = self.findChild(QLabel, 'goose_video2')
+        self.goose_video3 = self.findChild(QLabel, 'goose_video3')
 
-        # QPixmap을 QImage로 변환하여 클릭한 좌표의 색상 추출
-        img = self.pixmap.toImage()
-        color = img.pixel(x, y)
+        # 라즈베리파이 IP 및 포트 설정 (예시)
+        raspberry_pi_ips = ['192.168.45.90', '192.168.0.102', '192.168.45.90']  # 라즈베리파이 IP
+        udp_ports = [9999, 9999, 9999]  # 라즈베리파이에서 송출하는 포트
 
-        # QColor 객체로 변환하여 RGB 값 추출
-        qcolor = QColor(color)
-        rgb_color = (qcolor.red(), qcolor.green(), qcolor.blue())
-        print(f"spectrum_image1에서 선택한 색상: RGB {rgb_color}")
+        # 3개의 라즈베리파이로부터 영상 수신
+        self.video_threads = [
+            VideoReceiver(raspberry_pi_ips[0], udp_ports[0], 'goose_video1'),
+            VideoReceiver(raspberry_pi_ips[1], udp_ports[1], 'goose_video2'),
+            VideoReceiver(raspberry_pi_ips[2], udp_ports[2], 'goose_video3')
+        ]
 
-        # 선택한 색상을 color1 프레임에 채우기
-        if self.color_frame1 is not None:
-            self.update_color_preview(self.color_frame1, qcolor)
+        # 각 스레드의 frame_received 신호를 QLabel 업데이트 함수에 연결
+        self.video_threads[0].frame_received.connect(self.update_frame)
+        self.video_threads[1].frame_received.connect(self.update_frame)
+        self.video_threads[2].frame_received.connect(self.update_frame)
 
-    # 스펙트럼 2에서 클릭한 위치의 색상 추출 (color2에 반영)
-    def get_color_from_spectrum2(self, event):
-        x = event.pos().x()
-        y = event.pos().y()
+        # 스레드 시작
+        for thread in self.video_threads:
+            thread.start()
 
-        # QPixmap을 QImage로 변환하여 클릭한 좌표의 색상 추출
-        img = self.pixmap.toImage()
-        color = img.pixel(x, y)
+    # 프레임을 QLabel에 업데이트하는 함수
+    def update_frame(self, q_img, label_name):
+        if label_name == 'goose_video1':
+            self.goose_video1.setPixmap(QPixmap.fromImage(q_img))
+        elif label_name == 'goose_video2':
+            self.goose_video2.setPixmap(QPixmap.fromImage(q_img))
+        elif label_name == 'goose_video3':
+            self.goose_video3.setPixmap(QPixmap.fromImage(q_img))
 
-        # QColor 객체로 변환하여 RGB 값 추출
-        qcolor = QColor(color)
-        rgb_color = (qcolor.red(), qcolor.green(), qcolor.blue())
-        print(f"spectrum_image2에서 선택한 색상: RGB {rgb_color}")
+    # 창 닫을 때 스레드 종료
+    def closeEvent(self, event):
+        for thread in self.video_threads:
+            thread.stop()
+        event.accept()
 
-        # 선택한 색상을 color2 프레임에 채우기
-        if self.color_frame2 is not None:
-            self.update_color_preview(self.color_frame2, qcolor)
-
-    # 선택한 색상으로 프레임의 배경색 변경
-    def update_color_preview(self, frame, qcolor):
-        # QFrame에 스타일 시트를 적용하여 배경색을 설정
-        frame.setStyleSheet(f"background-color: rgb({qcolor.red()}, {qcolor.green()}, {qcolor.blue()});")
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

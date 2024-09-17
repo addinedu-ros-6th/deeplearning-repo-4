@@ -17,7 +17,7 @@ FRAME_HEIGHT = 480  # 수신되는 영상의 높이
 ANIMATION_DURATION = 8000  # 창 크기 조정 애니메이션 지속 시간 (밀리초, 8초로 설정)
 
 # YOLOv8 모델 불러오기
-model = YOLO('/home/sehyung/dev_ws/machine_learning/tcp_video_project/best_clothes_seg.pt')  # Segmentation 모델 경로
+model = YOLO('test/cloth_color/best_clothes_seg.pt')  # Segmentation 모델 경로
 
 # 색상 범위 정의
 color_ranges = {

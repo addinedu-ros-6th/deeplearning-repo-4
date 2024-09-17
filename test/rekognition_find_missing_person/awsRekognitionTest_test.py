@@ -7,12 +7,12 @@ import numpy as np
 rekognition_client = boto3.client('rekognition', region_name='ap-northeast-2')
 
 # 로컬 이미지를 RekognitionImage 객체로 로드
-reference_image_path = "./data/test_1.png"
+reference_image_path = "./GUI/download.jpeg"
 with open(reference_image_path, "rb") as img_file:
     reference_image = {"Bytes": img_file.read()}
 
 # 웹캠 설정
-cap = cv2.VideoCapture(2)
+cap = cv2.VideoCapture(0)
 
 while True:
     ret, frame = cap.read()
