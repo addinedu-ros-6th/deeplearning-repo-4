@@ -1,9 +1,10 @@
+import json
 import socket
 import threading
 import sys
 
-IP = "127.0.0.1"
-PORT = 9999
+SERVER_IP = "192.168.0.37"
+TCP_PORT = 8888
 
 class GooseTcp:
     def __init__(self):
@@ -11,25 +12,24 @@ class GooseTcp:
         
     def handle_receive(self, client_socket, client_address):
         """클라이언트로부터 메시지를 수신하는 함수"""
+        buffer = ""
         while True:
-            data = client_socket.recv(1024).decode('utf-8')
             try:
-                if not data:
-                    print(f"({client_address[0]}) disconnected!")
+                response = client_socket.recv(1024).decode("utf-8")
+                if response:
+                    buffer += response
+                    while "\n" in buffer:  # 구분자 '\n'을 기준으로 메시지를 나눔
+                        line, buffer = buffer.split("\n", 1)
+                        try:
+                            parsed_data = json.loads(line)
+                            print(f"received {client_address[0]}: {parsed_data}")
+                        except json.JSONDecodeError as e:
+                            print(f"JSON decode error: {e}")
+                if not response:
+                    print("disconnect!")
                     break
-                if data.startwith("sendto") :
-                    parts = data.split()
-                    if len(parts) >= 3:
-                        target_address = parts[1]
-                        message_to_send = ' '.join(parts[2:])
-                        self.send_to_client(target_address, f"{client_address[0]} say: {message_to_send}")
-                    else :
-                        print(f"Invalid sendto format from {client_address}")
-                else :
-                    print(f"({client_address[0]}) : {data}")
-
             except Exception as e:
-                print(f"({client_address[0]}) : err1or! {e}")
+                print(f"error! {e}")
                 break
 
         # 클라이언트가 연결을 끊으면 딕셔너리에서 제거
@@ -57,42 +57,18 @@ class GooseTcp:
         else:
             print(f"Client {target_address} not found!")
     #------------------------------------------------------------------------
-    def handle_send(self):
+    def handle_send(self, baby_goose_ip, message):
         """메인 스레드에서 처리하는 함수로, 입력과 broadcast 메시지 처리를 담당"""
-        while True:
-            message = "sendto"
-            # message = input()  # 서버에서 입력 처리 (자식 프로세스나 백그라운드 스레드에서는 표준 입력이 연결되어 있지 않을 수 있습니다.)
-            if message == "broadcast!!":
-                broadcast_message = input("broadcast message: ")
-                sys.stdout.flush()  # 출력 플러시
-                self.broadcast_message_to_all(broadcast_message)
-            elif message=="sendto":
-                if self.clients:
-                    print("Choose a client to send a message !")
-                    clients_list = list(self.clients.keys())
-                    for idx, client_ip in enumerate(clients_list) :
-                        print("----------------------")
-                        print(f"{idx +1}. {client_ip}")
-                        print("----------------------")
-                    try :
-                        # client_choice = int(input("Enter the number of the client:"))
-                        client_choice = 1
-                        if 0 < client_choice <= len(clients_list) :
-                            target_address = clients_list[client_choice-1]
-                            # message_to_send = input("Message :")
-                            message_to_send = "message!!"
-                            self.send_to_client(target_address, message_to_send)
-                        else :
-                            print("Invalid number!")
-                    except ValueError :
-                        print("enter a valid number")
+        if  baby_goose_ip == "all": 
+            self.broadcast_message_to_all(message)
+        else:
+            if self.clients:
+                clients_list = list(self.clients.keys())
+                if baby_goose_ip in clients_list :
+                    print(f"send to : {baby_goose_ip} {message}")
+                    self.send_to_client(baby_goose_ip, message)
                 else :
-                    print("No client")
-            elif message == "exit":
-                print("Server shutting down...")
-                break
-            else:
-                print("Invalid command! Use 'broadcast!!' or 'sendto'.")
+                    print(f"Not exist baby goose ip : {baby_goose_ip}")
 
     def handle_client(self, client_socket, client_address):
         """클라이언트 연결을 처리하는 함수"""
@@ -108,21 +84,16 @@ class GooseTcp:
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         #server_address = ('192.168.0.35', 9999)  # IP, 포트 설정
-        server_address = (IP, PORT)
+        server_address = (SERVER_IP, TCP_PORT)
 
         server_socket.bind(server_address)
         server_socket.listen(5)  # 최대 5개 연결 대기
         print("-----------------------------------------------------------------------------------")
         print("server started!")
         print("-----------------------------------------------------------------------------------")
-        print("type1 | 'broadcast!!' to send a message to all clients")
-        print("type2 | 'sendto <client_address> <message>' to send a message to a specific client")
-        print("-----------------------------------------------------------------------------------")
         # 클라이언트 연결을 수락하는 스레드
         threading.Thread(target=self.accept_clients, args=(server_socket,)).start()
 
-        # 메인 스레드에서 입력 대기
-        self.handle_send()
 
     def accept_clients(self, server_socket):
         #"""클라이언트 연결을 수락하는 함수"""
