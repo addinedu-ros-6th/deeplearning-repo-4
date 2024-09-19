@@ -174,8 +174,8 @@ class DManager:
         
         #self.initialize_threads()
         # 사용자 입력을 처리할 쓰레드 시작
-        input_thread = threading.Thread(target=self.process_input)
-        input_thread.start()
+        #input_thread = threading.Thread(target=self.process_input)
+        #input_thread.start()
         
         #자기 자신 웹캠
         #camera_thread = threading.Thread(target=MANAGER.camera_and_modelsel)
