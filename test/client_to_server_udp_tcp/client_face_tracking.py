@@ -39,10 +39,16 @@ except serial.SerialException:
 bg_num = 1
 br_code = 10
 
-def send_frame_with_json(frame, frame_time):
+# frame_id 초기화
+frame_id = 1
+
+def send_frame_with_json(frame):
     """
     프레임과 관련 데이터를 JSON 형식으로 전송하는 함수.
     """
+
+    global frame_id  # frame_id를 전역 변수로 설정하여 계속 증가할 수 있도록 함
+    
     _, frame_jpg = cv2.imencode('.jpg', frame)
     frame_base64 = base64.b64encode(frame_jpg).decode('utf-8')
 
@@ -50,7 +56,7 @@ def send_frame_with_json(frame, frame_time):
     json_data = {
         'bg_num': bg_num,
         'frame': frame_base64,
-        'frame_time': frame_time,
+        'frame_id': frame_id, 
         'br_code': br_code
     }
 
@@ -67,6 +73,8 @@ def send_frame_with_json(frame, frame_time):
 
         is_last_chunk = 1 if i == num_chunks - 1 else 0
         udp_socket.sendto(struct.pack('B', is_last_chunk) + chunk, (SERVER_IP, UDP_PORT))
+
+    frame_id += 1  # 프레임을 전송한 후 frame_id를 증가
 
 def receive_and_move_servos():
     try:
@@ -99,7 +107,7 @@ try:
 
         frame = cv2.flip(frame, 1)
 
-        send_frame_with_json(frame, frame_time)
+        send_frame_with_json(frame)
         print(f"프레임 및 시간 전송: {frame_time}")
 
         receive_and_move_servos()
