@@ -133,10 +133,10 @@ try:
         # JSON에서 Base64로 인코딩된 프레임 복원
         frame_base64 = json_data['frame']
 
-        # JSON으로부터 받은 데이터 출력 (여기에 print 문 추가)
+        # JSON으로부터 받은 데이터 출력
         print("수신된 JSON 데이터:")
         print(f"bg_num: {json_data['bg_num']}")
-        print(f"frame_time: {json_data['frame_time']}")
+        print(f"frame_id: {json_data['frame_id']}")  # frame_id 출력
         print(f"br_code: {json_data['br_code']}")
         # print(f"frame 데이터 (일부): {frame_base64[:100]}...")  # 프레임 데이터의 처음 100글자만 출력
 
