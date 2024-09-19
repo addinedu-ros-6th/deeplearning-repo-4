@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>716</width>
+    <width>609</width>
     <height>427</height>
    </rect>
   </property>
@@ -16,8 +16,8 @@
   <widget class="QDialogButtonBox" name="spectrum_button">
    <property name="geometry">
     <rect>
-     <x>360</x>
-     <y>390</y>
+     <x>240</x>
+     <y>380</y>
      <width>341</width>
      <height>32</height>
     </rect>
@@ -47,7 +47,7 @@
     <rect>
      <x>20</x>
      <y>60</y>
-     <width>471</width>
+     <width>381</width>
      <height>41</height>
     </rect>
    </property>
@@ -97,7 +97,7 @@
   <widget class="QFrame" name="color1">
    <property name="geometry">
     <rect>
-     <x>580</x>
+     <x>450</x>
      <y>20</y>
      <width>120</width>
      <height>80</height>
@@ -113,8 +113,8 @@
   <widget class="QFrame" name="color2">
    <property name="geometry">
     <rect>
-     <x>580</x>
-     <y>210</y>
+     <x>450</x>
+     <y>200</y>
      <width>120</width>
      <height>80</height>
     </rect>

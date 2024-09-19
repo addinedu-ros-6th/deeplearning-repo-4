@@ -8,8 +8,12 @@ rekognition_client = boto3.client('rekognition', region_name='ap-northeast-2')
 
 # 로컬 이미지를 RekognitionImage 객체로 로드
 reference_image_path = "./GUI/face_image/face_20240919_162511.jpg"
-with open(reference_image_path, "rb") as img_file:
-    reference_image = {"Bytes": img_file.read()}
+try:
+    with open(reference_image_path, "rb") as img_file:
+        reference_image = {"Bytes": img_file.read()}
+except FileNotFoundError:
+    print("Reference image not found.")
+    exit()
 
 # 웹캠 설정
 cap = cv2.VideoCapture(0)
@@ -18,9 +22,12 @@ while True:
     ret, frame = cap.read()
     if not ret:
         break
-    
+
+    # BGR을 RGB로 변환 (OpenCV는 기본적으로 BGR을 사용)
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
     # 웹캠에서 캡처된 프레임을 Rekognition에서 사용할 수 있도록 변환
-    _, buffer = cv2.imencode('.jpg', frame)
+    _, buffer = cv2.imencode('.jpg', frame_rgb)
     webcam_image = {"Bytes": buffer.tobytes()}
 
     try:
@@ -62,7 +69,7 @@ while True:
 
     # 프레임 출력
     cv2.imshow('Webcam Face Comparison', frame)
-    
+
     # 'q' 키를 누르면 종료
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
