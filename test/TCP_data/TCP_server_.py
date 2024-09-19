@@ -17,7 +17,8 @@ def handle_receive(client_socket, client_address):
                 if len(parts) >= 3:
                     target_address = parts[1]
                     message_to_send = ' '.join(parts[2:])
-                    send_to_client(target_address, f"{client_address[0]} say: {message_to_send}")
+                    send_to_client(target_address,
+                                   f"{client_address[0]} say: {message_to_send}")
                 else :
                     print(f"Invalid sendto format from {client_address}")
             else :
@@ -90,7 +91,8 @@ def handle_client(client_socket, client_address):
     print(f"{client_address} connected!")
     clients[client_address[0]] = client_socket  # 클라이언트 주소를 키로 사용하여 소켓 저장
     
-    receive_thread = threading.Thread(target=handle_receive, args=(client_socket, client_address))
+    receive_thread = threading.Thread(target=handle_receive, 
+                                      args=(client_socket, client_address))
     receive_thread.start()
 
 def start_server():
@@ -118,7 +120,8 @@ def accept_clients(server_socket):
     #"""클라이언트 연결을 수락하는 함수"""
     while True:
         client_socket, client_address = server_socket.accept()
-        client_thread = threading.Thread(target=handle_client, args=(client_socket, client_address))
+        client_thread = threading.Thread(target=handle_client, 
+                                         args=(client_socket, client_address))
         client_thread.start()
 
 if __name__ == "__main__":

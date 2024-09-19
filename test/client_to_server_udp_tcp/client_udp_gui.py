@@ -5,7 +5,7 @@ import struct
 import time
 
 # 서버 IP 및 포트 설정
-SERVER_IP = '192.168.45.166 '  # 서버 IP를 실제 IP로 변경
+SERVER_IP = '192.168.0.30 '  # 서버 IP를 실제 IP로 변경
 UDP_PORT = 9999
 TCP_PORT = 8888  # 헬스 체크용 TCP 포트
 

@@ -30,6 +30,7 @@ class GManager:
                 self.value = g_pipe.recv()
                 print(f"g_manager : {self.value}")
                 cv2.imshow("gcamera frame", self.value)
+                cv2.waitKey(1)
                 #g_pipe.send(self.value + 1)
 
 

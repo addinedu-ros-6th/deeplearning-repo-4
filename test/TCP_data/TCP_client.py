@@ -43,8 +43,10 @@ def start_client():
     print("connect!")
     print("disconnect 'exit'")
     
-    receive_thread = threading.Thread(target= handle_receive, args=(client_socket,))
-    send_thread = threading.Thread(target= handle_send, args=(client_socket,))
+    receive_thread = threading.Thread(target= handle_receive,
+                                      args=(client_socket,))
+    send_thread = threading.Thread(target= handle_send,
+                                   args=(client_socket,))
     receive_thread.start()
     send_thread.start()
     
