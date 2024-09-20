@@ -1,6 +1,11 @@
-deep_sort_tracking_copy_2.py로 실행해서 실행 명령어는,
- python deep_sort_tracking_copy_2.py --model retinanet_resnet50_fpn_v2 --show
+deep_sort_tracking_copy.py로 실행해서 실행 명령어는,
+ python deep_sort_tracking_copy.py --model retinanet_resnet50_fpn_v2 --show
 이걸로 하셔도 되고, --model 부분은 빼도 됨
 
 참고:
 https://learnopencv.com/real-time-deep-sort-with-torchvision-detectors/
+
+#########################
+torchreid 삭제 및 git에서 다시 설치하기
+pip uninstall torchreid
+pip install git+https://github.com/KaiyangZhou/deep-person-reid.git
