@@ -5,8 +5,8 @@ from collections import Counter
 
 class MissingDetect:
     def __init__(self):
-        self.Person_Detect_model = YOLO('yolov5n.pt')  # 사람 검출용
-        self.Clothes_Segment_model = YOLO('best_clothes_seg.pt')  # 의류 세그멘테이션용
+        self.Person_Detect_model = YOLO('models/yolov5n.pt')  # 사람 검출용
+        self.Clothes_Segment_model = YOLO('models/best_clothes_seg.pt')  # 의류 세그멘테이션용
         
         # 색상 범위 정의
         self.color_ranges = {
