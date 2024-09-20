@@ -288,7 +288,7 @@ class InputFaceDialog(QDialog):
         #timestamp = 사진 정보 저장
         #file_path = os.path.join(save_dir, f'face_{timestamp}.jpg')
         file_path = os.path.join(save_dir,'face_image.jpg')#이미지 경로
-        self.gmanager.gui_queue.put(file_path)
+        self.gmanager.gui_queue.put(file_path) # gmamager queue 를 사용하여 전달 !!!!!!!!!!!
 
         # 이미지 저장
         cv2.imwrite(file_path, frame)
