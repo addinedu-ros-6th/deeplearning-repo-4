@@ -1,4 +1,5 @@
 import json
+import queue
 import socket
 import threading
 import sys
@@ -10,6 +11,7 @@ stop_event = threading.Event()
 class GManager:
     def __init__(self):
         self.goose_tcp = GooseTcp()
+        self.gui_queue = queue.Queue()
         
     def set_request_json(self, baby_goose_ip):
         """baby goose 에게 전송할 data json 생성"""
@@ -21,14 +23,27 @@ class GManager:
         json_data = json.dumps(request)
         
         return json_data
+    
+    def communicator(self, g_pipe):
+        while True:
+            try:
+                data = self.gui_queue.get(timeout=1)
+                if data is None:
+                    break
+                print(f"Coummunicator :{data}")
+                self.gui_queue.task_done()
+            except queue.Empty:
+                continue
 
 
     def run(self, g_pipe):
         app = QApplication(sys.argv)
-        window = MainWindow()
+        window = MainWindow(self)
+        window.show()
 
-        gui_thread = threading.Thread(target=window.show())
-        gui_thread.start()
+        comm_thread = threading.Thread(target=self.communicator, args=(g_pipe,))
+        comm_thread.start()
+
         sys.exit(app.exec_())
         
         
