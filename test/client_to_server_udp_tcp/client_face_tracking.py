@@ -48,7 +48,7 @@ def send_frame_with_json(frame):
     """
 
     global frame_id  # frame_id를 전역 변수로 설정하여 계속 증가할 수 있도록 함
-    
+
     _, frame_jpg = cv2.imencode('.jpg', frame)
     frame_base64 = base64.b64encode(frame_jpg).decode('utf-8')
 
@@ -56,7 +56,7 @@ def send_frame_with_json(frame):
     json_data = {
         'bg_num': bg_num,
         'frame': frame_base64,
-        'frame_id': frame_id, 
+        'frame_id': frame_id,
         'br_code': br_code
     }
 
@@ -82,15 +82,20 @@ def receive_and_move_servos():
         tcp_socket.connect((SERVER_IP, TCP_PORT))
         coord_data = tcp_socket.recv(1024).decode('utf-8').strip()
 
-        if coord_data and 'X' in coord_data and 'Y' in coord_data and 'M' in coord_data:
-            x_mid = int(coord_data[coord_data.find('X')+1:coord_data.find('Y')])
-            y_mid = int(coord_data[coord_data.find('Y')+1:coord_data.find('M')])
-            move_amount = int(coord_data[coord_data.find('M')+1:])
-            print(f"서버로부터 받은 좌표: X: {x_mid}, Y: {y_mid}, Move: {move_amount}")
+        # JSON 형식으로 데이터 파싱
+        direction_data = json.loads(coord_data)
 
-            command = f"X{x_mid}Y{y_mid}M{move_amount}\n"
-            arduino.write(command.encode())
-            print(f"서보 모터 이동 명령 전송: {command}")
+        x_mid = direction_data.get('x', 0)
+        y_mid = direction_data.get('y', 0)
+        move_amount = direction_data.get('move', 0)
+        mode = direction_data.get('mode', 'T')  # 모드 값 (T: Tracking, P: Patrol)
+
+        print(f"서버로부터 받은 데이터 : Mode: {mode}, X: {x_mid}, Y: {y_mid}, Move: {move_amount}")
+
+        # 아두이노로 모드 값을 포함하여 데이터 전송 (모드를 맨 앞에 추가)
+        command = f"{mode}X{x_mid}Y{y_mid}M{move_amount}\n"
+        arduino.write(command.encode())
+        print(f"서보 모터 이동 명령 전송: {command}")
 
         tcp_socket.close()
     except Exception as e:

@@ -5,6 +5,7 @@ import mediapipe as mp
 import numpy as np
 import base64
 import json
+import time
 
 # 서버 설정
 UDP_PORT = 9999
@@ -43,6 +44,9 @@ move_twice_counter = 0
 move_twice_limit = 8
 move_thrice_counter = 0
 move_thrice_limit = 5
+
+# 모드 전환을 위한 전역 변수
+mode = 'T'  # 기본 모드는 'T' (tracking_mode)
 
 def process_frame(frame):
     """
@@ -138,12 +142,10 @@ try:
         print(f"bg_num: {json_data['bg_num']}")
         print(f"frame_id: {json_data['frame_id']}")  # frame_id 출력
         print(f"br_code: {json_data['br_code']}")
-        # print(f"frame 데이터 (일부): {frame_base64[:100]}...")  # 프레임 데이터의 처음 100글자만 출력
 
         # Base64 디코딩 및 프레임 복원
         frame_data = base64.b64decode(frame_base64)
         frame = cv2.imdecode(np.frombuffer(frame_data, dtype=np.uint8), cv2.IMREAD_COLOR)
-
 
         # 얼굴 감지 및 이동 값 계산
         x_mid, y_mid, move_amount = process_frame(frame)
@@ -151,9 +153,15 @@ try:
         conn, client_address = tcp_socket.accept()
         print(f"클라이언트 연결됨: {client_address}")
         with conn:
-            direction_data = f"X{x_mid}Y{y_mid}M{move_amount}".encode('utf-8')
-            conn.sendall(direction_data)
-            print(f"좌표 전송: X={x_mid}, Y={y_mid}, Move={move_amount}")
+            # JSON 형식으로 데이터 전송
+            direction_data = {
+                "mode": mode,  # 모드 정보를 JSON에 포함
+                "x": x_mid,
+                "y": y_mid,
+                "move": move_amount
+            }
+            conn.sendall(json.dumps(direction_data).encode('utf-8'))
+            print(f"좌표 및 모드 전송: {direction_data}")
 
         center_x, center_y = FRAME_WIDTH // 2, FRAME_HEIGHT // 2
         cv2.circle(frame, (center_x, center_y), extra_large_circle_radius, (255, 255, 0), 2)
@@ -163,7 +171,16 @@ try:
 
         cv2.imshow('Received Frame', frame)
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        # 키보드 입력 처리
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('1'):
+            mode = 'T'  # Tracking Mode
+            print("tracking_mode로 전환되었습니다.")
+        elif key == ord('2'):
+            mode = 'P'  # Patrol Mode
+            print("patrol_mode로 전환되었습니다.")
+        elif key == ord('q'):
+            print("프로그램을 종료합니다.")
             break
 
 finally:
