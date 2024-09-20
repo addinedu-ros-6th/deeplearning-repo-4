@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QLabel, QDialogB
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, Qt 
 import cv2
+import queue
 import sys
 import socket
 import pickle
@@ -60,8 +61,9 @@ class VideoReceiver(QThread):
         self.wait()
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, gmanager):
         super().__init__()
+        self.gmanager = gmanager
 
         # main.ui 파일을 불러와서 메인 윈도우로 사용 (GUI 폴더 경로 추가)
         uic.loadUi('UI_file/main.ui', self)
@@ -107,7 +109,7 @@ class MainWindow(QMainWindow):
 
     # input_face 창 열기 및 사람찾기 버튼 클릭 시 실행
     def show_input_face(self):
-        self.input_face_dialog = InputFaceDialog()
+        self.input_face_dialog = InputFaceDialog(self.gmanager)
         self.input_face_dialog.exec_()
 
         if self.input_face_dialog.isHidden():
@@ -125,8 +127,9 @@ class MainWindow(QMainWindow):
 
 
 class InputFaceDialog(QDialog):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, gmanager, parent=None):
+        super().__init__(parent)
+        self.gmanager = gmanager
         
         self.face_detected_count = 0
         self.required_detection_count = 10  # 연속으로 인식되면 얼굴 저장
@@ -288,8 +291,6 @@ class InputFaceDialog(QDialog):
         
         # 이미지 저장
         cv2.imwrite(file_path, frame)
-        print(f"얼굴 이미지가 {file_path}에 저장되었습니다.") 
-       
         self.close()
         self.show_cloth_pop_dialog()
         ####################################
