@@ -22,7 +22,6 @@ class GManager:
 
 
     def run(self, g_pipe):
-
         app = QApplication(sys.argv)
         window = MainWindow()
         window.show()
