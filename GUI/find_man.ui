@@ -17,8 +17,8 @@
    <widget class="QWidget" name="verticalLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>90</y>
+      <x>0</x>
+      <y>60</y>
       <width>131</width>
       <height>361</height>
      </rect>
@@ -89,8 +89,8 @@
    <widget class="QTextBrowser" name="textBrowser">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>40</y>
+      <x>0</x>
+      <y>10</y>
       <width>131</width>
       <height>541</height>
      </rect>
@@ -107,8 +107,8 @@ p, li { white-space: pre-wrap; }
    <widget class="QLabel" name="goose_video1">
     <property name="geometry">
      <rect>
-      <x>190</x>
-      <y>130</y>
+      <x>160</x>
+      <y>100</y>
       <width>431</width>
       <height>321</height>
      </rect>
@@ -120,8 +120,8 @@ p, li { white-space: pre-wrap; }
    <widget class="QWidget" name="verticalLayoutWidget_2">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>110</y>
+      <x>0</x>
+      <y>80</y>
       <width>131</width>
       <height>441</height>
      </rect>
