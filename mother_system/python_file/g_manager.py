@@ -5,6 +5,8 @@ import sys
 from goose_tcp import GooseTcp
 from gui import *
 
+stop_event = threading.Event()
+
 class GManager:
     def __init__(self):
         self.goose_tcp = GooseTcp()
@@ -24,7 +26,9 @@ class GManager:
     def run(self, g_pipe):
         app = QApplication(sys.argv)
         window = MainWindow()
-        window.show()
+
+        gui_thread = threading.Thread(target=window.show())
+        gui_thread.start()
         sys.exit(app.exec_())
     #    # self.goose_tcp.start_server()
     #    while True:
