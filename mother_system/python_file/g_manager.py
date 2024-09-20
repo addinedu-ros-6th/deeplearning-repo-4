@@ -30,7 +30,13 @@ class GManager:
         gui_thread = threading.Thread(target=window.show())
         gui_thread.start()
         sys.exit(app.exec_())
-    #    # self.goose_tcp.start_server()
+        
+        
+        
+        
+        
+        
+    #     self.goose_tcp.start_server()
     #    while True:
     #        if g_pipe.poll():
     #            
@@ -38,8 +44,8 @@ class GManager:
     #            print(f"g_manager : {self.value}")
     #            cv2.imshow("gcamera frame", self.value)
     #            cv2.waitKey(1)
-    #            #g_pipe.send(self.value + 1)
-
+    #        g_pipe.send(self.value + 1)
+#
 
     # Baby goose 와 TPC/IP 통신 코드
 

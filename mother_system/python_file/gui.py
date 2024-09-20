@@ -198,6 +198,8 @@ class InputFaceDialog(QDialog):
         ret, frame = self.cap.read()
         
         if ret == True:
+            original_frame = frame.copy() # 얼굴 바운딩 박스 제거하
+            
             frame_height, frame_width = frame.shape[:2]
             frame_center_x = frame_width // 2
             frame_center_y = frame_height // 2
@@ -235,15 +237,19 @@ class InputFaceDialog(QDialog):
                              <= bottom_right_y)):
                         self.face_detected_count = 0
                         continue
-                    
-                    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                    #########################
+                    bounding_box= (x,y,w,h)#바운딩박스 좌표정보
+                    #########################
+                   #cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                     
                     self.face_detected_count += 1
                    
 
                     if self.face_detected_count >= self.required_detection_count:#10번
                         print("stop")
-                        face_frame = frame[y:y + h, x:x + w]  # 얼굴 영역만 잘라서 저장
+                        face_frame = frame[y:y + 2*h, x:x + 2*w]  # 얼굴 영역만 잘라서 저장
+
+                        ##############################################
                         self.save_face_image(face_frame)  # 얼굴 저장 함수 호출
 
                         # 얼굴이 인식되고 저장되면 OK 버튼 누른 것처럼 cloth_pop 창 열기
@@ -276,13 +282,18 @@ class InputFaceDialog(QDialog):
 
         # 타임스탬프를 이용해 파일명 생성
         timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-        file_path = os.path.join(save_dir, f'face_{timestamp}.jpg')
-
+        #timestamp = 사진 정보 저장
+        #file_path = os.path.join(save_dir, f'face_{timestamp}.jpg')
+        file_path = os.path.join(save_dir,'face_image.jpg')#이미지 경로
+        
         # 이미지 저장
         cv2.imwrite(file_path, frame)
-        print(f"얼굴 이미지가 {file_path}에 저장되었습니다.")
+        print(f"얼굴 이미지가 {file_path}에 저장되었습니다.") 
+       
         self.close()
         self.show_cloth_pop_dialog()
+        ####################################
+        #self.send_image_to_Dmanager(self, )
         
 
     # cloth_pop 다이얼로그 열기
@@ -439,8 +450,8 @@ class FindManWindow(QMainWindow):
         else:
             super().keyPressEvent(event) 
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec_())
+#if __name__ == '__main__':
+#  #  app = QApplication(sys.argv)
+#    window = MainWindow()
+#    window.show()
+#    sys.exit(app.exec_())
