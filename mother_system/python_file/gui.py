@@ -64,7 +64,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         # main.ui 파일을 불러와서 메인 윈도우로 사용 (GUI 폴더 경로 추가)
-        uic.loadUi('GUI/main.ui', self)
+        uic.loadUi('mother_system/main.ui', self)
 
         # 메인 화면에 있는 버튼을 찾고 클릭 이벤트 연결
         self.btn_airport_info = self.findChild(QPushButton, 'airport_info')
@@ -84,13 +84,13 @@ class MainWindow(QMainWindow):
     # air_port_info 창 열기
     def show_airport_info(self):
         self.airport_info_window = QDialog()
-        uic.loadUi('GUI/air_port_info.ui', self.airport_info_window)
+        uic.loadUi('mother_system/air_port_info.ui', self.airport_info_window)
         
         map1_label = self.airport_info_window.findChild(QLabel, 'map1')
         map2_label = self.airport_info_window.findChild(QLabel, 'map2')
         
-        pixmap1 = QPixmap('./GUI/etc_image/airport_map1.png')
-        pixmap2 = QPixmap('./GUI/etc_image/airport_map2.png')
+        pixmap1 = QPixmap('./mother_system/etc_images/airport_map1.png')
+        pixmap2 = QPixmap('./mother_system/etc_images/airport_map2.png')
         
         if map1_label is not None :
             map1_label.setPixmap(pixmap1)
@@ -133,7 +133,7 @@ class InputFaceDialog(QDialog):
         self.center_tolerance = 50  # 중앙으로부터 50픽셀 내의 얼굴만 저장
 
         # input_face.ui 파일 로드
-        uic.loadUi('GUI/input_face.ui', self)
+        uic.loadUi('mother_system/input_face.ui', self)
 
         # QLabel 찾기 (QLabel의 이름은 'input_video')
         self.webcam_label = self.findChild(QLabel, 'input_video')
@@ -270,7 +270,7 @@ class InputFaceDialog(QDialog):
     # 얼굴 이미지 저장
     def save_face_image(self, frame):
         print("save")
-        save_dir = os.path.expanduser('./GUI/face_image')
+        save_dir = os.path.expanduser('./mother_system/face_images')
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
 
@@ -303,7 +303,7 @@ class ClothPopDialog(QDialog):
         super().__init__()
 
         # cloth_pop.ui 파일 로드
-        uic.loadUi('GUI/cloth_pop.ui', self)
+        uic.loadUi('mother_system/cloth_pop.ui', self)
 
         # QLabel 찾기 (spectrum_image1, spectrum_image2)
         self.spectrum_image1 = self.findChild(QLabel, 'spectrum_image1')
@@ -321,7 +321,7 @@ class ClothPopDialog(QDialog):
             self.dialog_button_box.accepted.connect(self.show_find_man)
 
         # spectrum.png 이미지를 OpenCV로 로드 (픽셀 처리)
-        self.cv_image = cv2.imread('./GUI/etc_image/spectrum.png')
+        self.cv_image = cv2.imread('./mother_system/etc_images/spectrum.png')
         self.cv_image = cv2.cvtColor(self.cv_image, cv2.COLOR_BGR2RGB)  # BGR을 RGB로 변환
 
         # QLabel에 이미지 설정
@@ -388,7 +388,7 @@ class FindManWindow(QMainWindow):
         super().__init__()
 
         # find_man.ui 파일 로드
-        uic.loadUi('GUI/find_man.ui', self)
+        uic.loadUi('mother_system/find_man.ui', self)
 
         # QLabel 찾기 (QLabel의 이름은 'goose_video1', 'goose_video2', 'goose_video3')
         self.goose_video1 = self.findChild(QLabel, 'goose_video1')
