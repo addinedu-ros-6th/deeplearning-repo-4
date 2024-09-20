@@ -18,7 +18,7 @@ ANIMATION_DURATION = 8000  # 창 크기 조정 애니메이션 지속 시간 (�
 FRAME_WIDTH = 640
 FRAME_HEIGHT = 480
 
-mother_req = 0
+mother_req = 22
 stop_event = threading.Event()
 
 class DManager:
@@ -68,7 +68,6 @@ class DManager:
             return json_data
         except Exception as e:
             print(f"JSON 데이터 복원 오류: {e}")
-            print(f"수신된 데이터: {buffer.decode('utf-8', errors='ignore')}")
             return None
     
     def connect_and_modelsel(self):
@@ -77,18 +76,12 @@ class DManager:
 
             # JSON 데이터 수신
             self.json_data = self.receive_json_data()
-            print("here1")
             if self.json_data is None:
                 continue
-            print("here2")
             self.frame_base64 = self.json_data['frame']
-            print("here3")
             self.frame_data = base64.b64decode(self.frame_base64)
-            print("here4")
             self.frame = cv2.imdecode(np.frombuffer(self.frame_data, dtype=np.uint8), cv2.IMREAD_COLOR)
-            print("here5")
             self.frame = cv2.resize(self.frame, (640, 480))
-            print("here6")
             
             if mother_req == 10:
                 results = self.WetFloorDetect.inference_WF_Detect(self.frame)
@@ -109,14 +102,13 @@ class DManager:
             #                        thickness=2)
             #
             elif mother_req == 22:
-                print("here7")
+
                 self.frame = self.MissingDetect.inference_MP_Detect2(self.frame)
                 self.frame = cv2.putText(img=self.frame, text="MISSING", \
                                     org=(30, 30), \
                                     fontFace=cv2.FONT_HERSHEY_SIMPLEX,\
                                     fontScale=2, color=(0, 0, 255),\
                                     thickness=2)
-                print("here8")
             
             self.d_pipe.send(self.frame)
             cv2.imshow("camera frame", self.frame)
