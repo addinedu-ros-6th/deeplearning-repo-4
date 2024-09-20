@@ -10,50 +10,137 @@ import struct
 import os 
 import datetime 
 import numpy as np
+from ultralytics import YOLO
+
 
 MAX_DGRAM = 65507  # UDP의 최대 패킷 크기
+TCP_PORT = 8888  # 헬스 체크용 TCP 포트
+FRAME_WIDTH = 640  # 수신되는 영상의 너비
+FRAME_HEIGHT = 480  # 수신되는 영상의 높이
+ANIMATION_DURATION = 8000 
+
+model = YOLO('test/cloth_color/best_clothes_seg.pt')  # Segmentation 모델 경로
+
+color_ranges = {
+    'red1': [(0, 100, 100), (10, 255, 255)],
+    'red2': [(170, 100, 100), (180, 255, 255)],
+    'orange': [(10, 100, 100), (25, 255, 255)],
+    'yellow': [(25, 100, 100), (35, 255, 255)],
+    'green': [(35, 100, 100), (85, 255, 255)],
+    'blue': [(85, 100, 100), (125, 255, 255)],
+    'navy': [(125, 100, 100), (140, 255, 255)],
+    'violet': [(140, 100, 100), (170, 255, 255)],
+    'white': [(0, 0, 125), (180, 30, 255)],
+    'gray': [(0, 0, 70), (180, 30, 125)],
+    'black': [(0, 0, 1), (180, 50, 70)]
+}
 
 class VideoReceiver(QThread):
     frame_received = pyqtSignal(QImage, str)  # QLabel로 보낼 처리된 프레임
 
 
-    def __init__(self, udp_ip, udp_port, label_name):
+    def __init__(self, udp_ip, udp_port, label_name, main_window):
         super().__init__()
         self.udp_ip = udp_ip
         self.udp_port = udp_port
         self.label_name = label_name
+        self.main_window = main_window
         
         # 소켓 생성 및 SO_REUSEADDR 설정
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # 포트 재사용 설정
-        self.socket.bind(('0.0.0.0', self.udp_port))  # 해당 IP와 포트에 바인딩
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # 포트 재사용 설정
+        self.server_socket.bind(('0.0.0.0', self.udp_port))  # 해당 IP와 포트에 바인딩
         self.running = True
         self.buffer = b""  # 데이터를 받을 버퍼
 
     def run(self):
-        while self.running:
-            try:
-                chunk, _ = self.socket.recvfrom(MAX_DGRAM)  # 데이터 수신
-                is_last_chunk = struct.unpack("B", chunk[:1])[0]  # 첫 번째 바이트로 마지막 청크 여부 확인
-                self.buffer += chunk[1:]  # 첫 번째 바이트 제외하고 버퍼에 추가
+        try:
+            while self.running:
+                # 데이터 수신
+                chunk, addr = self.server_socket.recvfrom(MAX_DGRAM)
+                client_address = addr[0]  # 클라이언트 주소로 구분
+                is_last_chunk = struct.unpack("B", chunk[:1])[0]  # 첫 바이트는 마지막 청크 여부
+                self.buffer += chunk[1:]  # 실제 데이터는 두 번째 바이트부터
 
-                if is_last_chunk:  # 마지막 청크라면
-                    frame = pickle.loads(self.buffer)  # 버퍼에서 프레임 복원
-                    self.buffer = b""  # 버퍼 초기화
+                if is_last_chunk:
+                    # 마지막 청크를 수신했을 때 프레임 복원
+                    try:
+                        frame = pickle.loads(self.buffer)
+                        self.buffer = b""  # 버퍼 초기화
 
-                    # OpenCV의 BGR 포맷을 RGB로 변환
-                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                        # 프레임을 RGB로 변환 후 PyQt로 변환
+                        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                        frame = cv2.resize(frame, (FRAME_WIDTH, FRAME_HEIGHT))
 
-                    # QImage로 변환 rgb
-                    h, w, ch = frame_rgb.shape
+                        # YOLOv8 모델로 추론
+                        results = model.predict(source=frame, iou=0.25, conf=0.7)
+                        predicted_classes = [model.names[int(class_id)] for class_id in results[0].boxes.cls]
 
-                    bytes_per_line = ch * w
-                    q_img = QImage(frame_rgb.data, w, h, bytes_per_line, QImage.Format_RGB888)
-                    self.frame_received.emit(q_img, self.label_name)
+                       # selected_color = self.main_window.color_selector.currentText()
 
-            except Exception as e:
-                print(f"영상 수신 오류: {e}")
+                        for idx, result in enumerate(results):
+                            if result.masks is not None:
+                                for mask in result.masks.data:
+                                    mask = mask.cpu().numpy()
+                                    colored_mask = (mask * 255).astype('uint8')
+                                    colored_mask = cv2.cvtColor(colored_mask, cv2.COLOR_GRAY2BGR)
+                                    mask255 = (mask * 255).astype("uint8")
+                                    masked_frame = cv2.bitwise_and(frame, frame, mask=mask255)
 
+                                    hsv_masked_area = cv2.cvtColor(masked_frame, cv2.COLOR_BGR2HSV)
+
+                                    color_areas = {}
+                                    for color_name, (lower, upper) in color_ranges.items():
+                                        lower_bound = np.array(lower, dtype=np.uint8)
+                                        upper_bound = np.array(upper, dtype=np.uint8)
+                                        color_mask = cv2.inRange(hsv_masked_area, lower_bound, upper_bound)
+                                        area_size = cv2.countNonZero(color_mask)
+                                        color_areas[color_name] = area_size
+
+                                    largest_color = max(color_areas, key=color_areas.get)
+                                    largest_color_value = color_areas[largest_color]
+                                    next_largest_color_value = max(color_areas.values())
+
+                                    if largest_color_value < next_largest_color_value * 3.5:
+                                        show_color = f"{largest_color} and {max(color_areas, key=color_areas.get)}"
+                                    else:
+                                        show_color = largest_color
+
+                                    frame = cv2.addWeighted(frame, 1, colored_mask, 0, 0)
+                                    contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                                    if contours:
+                                        cnt = max(contours, key=cv2.contourArea)
+                                        M = cv2.moments(cnt)
+                                        if M["m00"] != 0:
+                                            cX = int(M["m10"] / M["m00"])
+                                            cY = int(M["m01"] / M["m00"])
+
+                                            class_name = predicted_classes[idx]
+
+                                           # if selected_color in show_color:
+                                           #     color_text = f"color : {show_color}, class: {class_name}, detected"
+                                           #     contour_color = (255, 0, 0)
+                                           #     cv2.circle(frame, (cX, cY), 10, (255, 0, 0), 3)  # 반지름 10, 두께 3으로 설정
+                                           #     print(f"빨간 점 좌표: ({cX}, {cY})")
+                                           # else:
+                                           #     color_text = f"color : {show_color}, class: {class_name}"
+                                           #     contour_color = (0, 255, 0)
+
+                                            cv2.putText(frame, color_text, (cX - 50, cY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, contour_color, 2)
+                                            cv2.drawContours(frame, [cnt], -1, contour_color, 2)
+
+                        h, w, ch = frame.shape
+                        q_img = QImage(frame.data, w, h, ch * w, QImage.Format_RGB888)
+
+                        self.frame_received.emit(q_img, client_address)
+
+                    except Exception as e:
+                        print(f"프레임 복원 중 오류 발생: {e}")
+                        self.buffer = b""
+        except Exception as e:
+            print(f"데이터 수신 오류: {e}")
+        #finally:
+        #    self.server_socket.close()
     def stop(self):
         self.running = False  # 스레드 종료
         self.socket.close()
@@ -80,6 +167,10 @@ class MainWindow(QMainWindow):
             self.btn_find_man.clicked.connect(self.show_input_face)
         else :
             print("ui를 읽어오지 못함")
+            
+        self.video_thread = VideoReceiver('192.168.0.32', 9999, 'goose_video1', self)
+        self.video_thread.start()
+
             
     # air_port_info 창 열기
     def show_airport_info(self):
@@ -281,6 +372,8 @@ class InputFaceDialog(QDialog):
         # 이미지 저장
         cv2.imwrite(file_path, frame)
         print(f"얼굴 이미지가 {file_path}에 저장되었습니다.")
+        self.close()
+        self.show_cloth_pop_dialog()
 
     # cloth_pop 다이얼로그 열기
     def show_cloth_pop_dialog(self):
@@ -401,9 +494,9 @@ class FindManWindow(QMainWindow):
 
         # 3개의 라즈베리파이로부터 영상 수신
         self.video_threads = [
-            VideoReceiver(raspberry_pi_ips[0], udp_ports[0], 'goose_video1'),
-            VideoReceiver(raspberry_pi_ips[1], udp_ports[1], 'goose_video2'),
-            VideoReceiver(raspberry_pi_ips[2], udp_ports[2], 'goose_video3')
+            VideoReceiver(raspberry_pi_ips[0], udp_ports[0], 'goose_video1',self),
+            VideoReceiver(raspberry_pi_ips[1], udp_ports[1], 'goose_video2',self),
+            VideoReceiver(raspberry_pi_ips[2], udp_ports[2], 'goose_video3',self)
         ]
 
         # 각 스레드의 frame_received 신호를 QLabel 업데이트 함수에 연결
