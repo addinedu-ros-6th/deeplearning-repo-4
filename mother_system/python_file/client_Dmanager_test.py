@@ -5,7 +5,6 @@ import base64
 import json
 import time
 import serial
-import base64
 from unittest.mock import MagicMock
 
 # 아두이노가 없을 때 MagicMock을 사용하여 오류를 방지
@@ -18,7 +17,7 @@ except ModuleNotFoundError:
 SERVER_IP = '127.0.0.1'
 UDP_PORT = 9999
 TCP_PORT = 8888
-MAX_DGRAM = 65507 - 1
+MAX_DGRAM = 1400  # 패킷 단편화를 방지하기 위해 패킷 크기를 줄임
 
 # UDP 소켓 생성
 udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -39,34 +38,34 @@ except serial.SerialException:
 bg_num = 1
 br_code = 10
 
-def send_frame_with_json(frame, frame_time):
+frame_id = 0  # 프레임 식별자
+
+def send_frame(frame):
     """
-    프레임과 관련 데이터를 JSON 형식으로 전송하는 함수.
+    프레임을 바이너리 데이터로 전송하는 함수.
     """
-    _, frame_jpg = cv2.imencode('.jpg', frame)
-    frame_base64 = base64.b64encode(frame_jpg).decode('utf-8')
+    global frame_id
+    frame_id = (frame_id + 1) % 256  # 0-255 사이에서 순환하도록
 
-    # JSON 데이터 구성
-    json_data = {
-        'bg_num': bg_num,
-        'frame': frame_base64,
-        'frame_time': frame_time,
-        'br_code': br_code
-    }
+    # JPEG로 인코딩 (압축률 조정 가능)
+    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 50]  # 압축률을 높여 이미지 크기 감소
+    result, frame_jpg = cv2.imencode('.jpg', frame, encode_param)
+    data = frame_jpg.tobytes()
 
-    # JSON 데이터를 직렬화하여 UTF-8로 인코딩
-    json_data_str = json.dumps(json_data).encode('utf-8')
+    # 데이터 분할
+    chunk_size = MAX_DGRAM - 7  # 헤더 크기 고려 (frame_id(1) + total_chunks(1) + seq_num(1) + data_len(2) + bg_num(1) + br_code(1)) = 7 bytes
+    size = len(data)
+    total_chunks = (size + chunk_size - 1) // chunk_size
 
-    size = len(json_data_str)
-    num_chunks = (size // MAX_DGRAM) + 1
+    header_format = '=BBBHBB'  # 패딩 없음 (frame_id, total_chunks, seq_num, data_len, bg_num, br_code)
+    for seq_num in range(total_chunks):
+        start = seq_num * chunk_size
+        end = min(start + chunk_size, size)
+        chunk = data[start:end]
 
-    for i in range(num_chunks):
-        start = i * MAX_DGRAM
-        end = min(start + MAX_DGRAM, size)
-        chunk = json_data_str[start:end]
-
-        is_last_chunk = 1 if i == num_chunks - 1 else 0
-        udp_socket.sendto(struct.pack('B', is_last_chunk) + chunk, (SERVER_IP, UDP_PORT))
+        # 헤더 구성: frame_id(1바이트), total_chunks(1바이트), seq_num(1바이트), data_len(2바이트), bg_num(1바이트), br_code(1바이트)
+        header = struct.pack(header_format, frame_id, total_chunks, seq_num, len(chunk), bg_num, br_code)
+        udp_socket.sendto(header + chunk, (SERVER_IP, UDP_PORT))
 
 def receive_and_move_servos():
     try:
@@ -95,14 +94,12 @@ try:
             print("프레임을 읽을 수 없습니다.")
             continue
 
-        frame_time = time.time()
-
         frame = cv2.flip(frame, 1)
 
-        send_frame_with_json(frame, frame_time)
-        print(f"프레임 및 시간 전송: {frame_time}")
+        send_frame(frame)
+        print(f"프레임 {frame_id} 전송 완료")
 
-        #receive_and_move_servos()
+        # receive_and_move_servos()
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
