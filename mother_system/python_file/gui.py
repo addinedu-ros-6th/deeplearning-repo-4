@@ -128,7 +128,7 @@ class InputFaceDialog(QDialog):
         self.webcam_label = self.findChild(QLabel, 'input_video')
       
         # OpenCV를 사용하여 웹캠 연결
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(2)
 
         # 얼굴 인식을 위한 Haar Cascade XML 파일 경로 설정
         
@@ -274,7 +274,7 @@ class InputFaceDialog(QDialog):
         #timestamp = 사진 정보 저장
         #file_path = os.path.join(save_dir, f'face_{timestamp}.jpg')
         file_path = os.path.join(save_dir,'face_image.jpg')#이미지 경로
-        self.gmanager.gui_queue.put(file_path) # gmamager queue 를 사용하여 전달 !!!!!!!!!!!
+        self.gmanager.from_gui_queue.put(11) # 11: 미아 사진 등록 완료 코드
 
         # 이미지 저장
         cv2.imwrite(file_path, frame)
@@ -389,6 +389,7 @@ class FindManWindow(QMainWindow):
     def __init__(self, gmanager):
         super().__init__()
         self.gmanager = gmanager
+        self.is_identified = False
 
         # find_man.ui 파일 로드
         uic.loadUi('UI_file/find_man.ui', self)
@@ -405,8 +406,12 @@ class FindManWindow(QMainWindow):
 
     # 프레임을 QLabel에 업데이트하는 함수
     def update_frame(self):
-        if not self.gmanager.comm_queue.empty():
-            frame = self.gmanager.comm_queue.get()
+        if not self.gmanager.to_gui_queue.empty():
+            # D-manager 로부터 가져온 정보들 
+            mother_req, is_identified, frame = self.gmanager.to_gui_queue.get()
+            if is_identified:
+                self.is_identified = True
+
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             h, w, ch = frame_rgb.shape
             bytes_per_line = ch * w
