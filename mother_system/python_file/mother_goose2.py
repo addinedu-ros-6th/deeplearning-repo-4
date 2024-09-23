@@ -3,8 +3,8 @@ from g_manager import GManager
 import threading
 import cv2
 from WetFloorDetector import WetFloorDetect
-from MissingDetector2 import MissingDetect
-from missing_face import Missing_face
+from MissingDetector import MissingDetect
+from missing_face_2 import Missing_face
 import socket
 import json
 import struct
@@ -16,6 +16,11 @@ import hashlib
 import boto3
 import os
 from deepface import DeepFace
+
+"""
+missing_face_2(deepface&yolo로 임베딩 후 aws rekognition 더블체크)로 하셔야합니다.
+AWS 95% 이상 나오면, 한 번 캠쳐해서 check_images에 저장(27번 코드 송출)
+"""
 
 
 MAX_DGRAM = 65507  # UDP의 최대 패킷 크기
@@ -85,6 +90,11 @@ class DManager:
     
     def connect_and_modelsel(self):
         while True: 
+            # GUI 요청 확인
+            # GUI 요청이 발생하는 경우, 아래 코드에 의헤 self.gui_req 값이 변경됩니다.
+            # 기본 상태 : None
+            # 미아 얼굴 촬영됨 (이미지 새로 저장됨) : 11
+            # 부모가 보내준 얼굴을 확인 yes : 28,  No : 29
             print("프레임 수신 대기 중...")
 
             # JSON 데이터 수신
@@ -108,6 +118,27 @@ class DManager:
                                     fontScale=2, color=(0, 0, 255),\
                                     thickness=2)
             
+            if mother_req == 11:
+                image_path = './face_images/face_image.jpg'
+                if self.MissingFace.load_reference_image(image_path):
+                    print("참조 이미지 임베딩이 성공적으로 생성되었습니다.")
+                    self.frame = self.MissingFace.face_similarity(self.frame)
+
+                    # AWS 유사도가 95% 이상이고 캡쳐가 완료되지 않았다면
+                    if self.MissingFace.capture_done:
+                        print("Image already captured.")
+                        self.d_pipe.send(27)
+                    else:
+                        continue
+
+                    self.frame = cv2.putText(img=self.frame, text="Similarity", \
+                    org=(30, 30), \
+                    fontFace=cv2.FONT_HERSHEY_SIMPLEX,\
+                    fontScale=2, color=(0, 0, 255),\
+                    thickness=2)
+                else:
+                    print("참조 이미지 로딩에 실패했습니다.")
+            
             #elif mother_req == 222222: #Missing Detector
             #    self.frame = self.MissingDetect.inference_MP_Detect(self.frame)
             #    self.frame = cv2.putText(img=self.frame, text="MISSING", \
@@ -117,19 +148,18 @@ class DManager:
             #                        thickness=2)
             #
             elif mother_req == 22:
-
                 self.frame = self.MissingDetect.inference_MP_Detect2(self.frame)
                 self.frame = cv2.putText(img=self.frame, text="MISSING", \
                                     org=(30, 30), \
                                     fontFace=cv2.FONT_HERSHEY_SIMPLEX,\
                                     fontScale=2, color=(0, 0, 255),\
                                     thickness=2)
-            elif mother_req == 23:
-                #주영님 코드#
-                pass
+            # elif mother_req == 23:
+            #     #주영님 코드#
+            #     pass
 
-            elif mother_req == 40:
-                self.frame = self.MissingFace.face_similarity(self.frame)
+            # elif mother_req == 40:
+            #     self.frame = self.MissingFace.face_similarity(self.frame)
 
             serialized_frame = pickle.dumps(self.frame)
             print(f"Serialized frame size: {sys.getsizeof(serialized_frame)} bytes")

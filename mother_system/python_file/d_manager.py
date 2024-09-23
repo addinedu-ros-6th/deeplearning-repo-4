@@ -2,11 +2,13 @@ import threading
 import cv2
 from WetFloorDetector import WetFloorDetect
 from MissingDetector import MissingDetect
+from DeepSortTracker import DeepSortTrack
 import socket
 import json
 import struct
 import numpy as np
 import base64
+
 
 MAX_DGRAM = 65507  # UDP의 최대 패킷 크기
 UDP_PORT = 9999
@@ -26,6 +28,7 @@ class DManager:
         
         self.WetFloorDetect = WetFloorDetect()
         self.MissingDetect = MissingDetect()
+        self.DeepSortTrack = DeepSortTrack()
 
         # UDP 소켓 설정 (클라이언트로부터 영상 수신)
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -110,6 +113,7 @@ class DManager:
                                     fontFace=cv2.FONT_HERSHEY_SIMPLEX,\
                                     fontScale=2, color=(0, 0, 255),\
                                     thickness=2)
+
 
             cv2.imshow("camera frame", self.frame)
             if (cv2.waitKey(1) & 0xff == ord('q')):

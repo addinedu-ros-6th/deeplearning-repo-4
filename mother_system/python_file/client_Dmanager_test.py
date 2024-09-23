@@ -23,7 +23,7 @@ MAX_DGRAM = 1400  # 패킷 단편화를 방지하기 위해 패킷 크기를 줄
 udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 # 웹캠 열기 (0번 카메라 사용)
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(2)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
