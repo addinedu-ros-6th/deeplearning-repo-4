@@ -96,6 +96,7 @@ class Missing_face:
                                     cv2.rectangle(self.frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                                     cv2.putText(self.frame, f'Doble-check By AWS: {similarity_by_aws:.2f}%', (x1, y1 - 10),
                                                 cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
+                                    center = ((x1 + x2)/2, (y1+y2)/2)
                                     print(f"얼굴 일치: AWS 유사도 {similarity_by_aws:.2f}%")
                         else:
                             # 유사도가 90% 미만인 경우 (로컬 유사도가 낮음)
@@ -114,4 +115,4 @@ class Missing_face:
         self.frame[10:160, 10:160] = ref_img_resized  # 좌측 상단에 삽입
         
 
-        return self.frame
+        return self.frame, center

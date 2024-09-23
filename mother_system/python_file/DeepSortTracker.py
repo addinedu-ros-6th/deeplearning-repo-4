@@ -26,7 +26,7 @@ class DeepSortTrack:
             'retinanet_resnet50_fpn',
             'retinanet_resnet50_fpn_v2'
         ])
-        parser.add_argument('--threshold', default=0.9, help='score threshold to filter out detections', type=float)
+        parser.add_argument('--threshold', default=0.95, help='score threshold to filter out detections', type=float)
         parser.add_argument('--embedder', default='torchreid', help='type of feature extractor to use', choices=[
             "mobilenet", "torchreid", "clip_RN50", "clip_RN101", "clip_RN50x4", "clip_RN50x16", "clip_ViT-B/32", "clip_ViT-B/16"
         ])
@@ -109,7 +109,7 @@ class DeepSortTrack:
         total_fps = 0
         
         frame = frame
-            
+        id_and_location = {}
         if self.args.imgsz:
             resized_frame = cv2.resize(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), (self.args.imgsz, self.args.imgsz))
         else:
@@ -130,6 +130,6 @@ class DeepSortTrack:
         frame_count += 1
 
         if len(tracks) > 0:
-            frame = annotate(tracks, frame, resized_frame, frame.shape[1], frame.shape[0], self.COLORS)
+            frame, id_and_location = annotate(tracks, frame, resized_frame, frame.shape[1], frame.shape[0], self.COLORS)
 
-        return frame
+        return frame, id_and_location
