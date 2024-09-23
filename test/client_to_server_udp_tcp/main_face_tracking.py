@@ -1,7 +1,7 @@
 import socket
 import struct
 import cv2
-import mediapipe as mp
+# import mediapipe as mp
 import numpy as np
 import base64
 import json
@@ -15,7 +15,7 @@ FRAME_WIDTH = 640
 FRAME_HEIGHT = 480
 
 # MediaPipe 얼굴 감지기 초기화
-mp_face_detection = mp.solutions.face_detection
+# mp_face_detection = mp.solutions.face_detection
 face_detection = mp_face_detection.FaceDetection(min_detection_confidence=0.7)
 
 # UDP 소켓 설정 (클라이언트로부터 영상 수신)
