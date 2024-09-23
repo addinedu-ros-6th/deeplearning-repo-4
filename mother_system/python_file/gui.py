@@ -1,6 +1,6 @@
 from PyQt5 import uic
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QLabel, QDialogButtonBox, QPushButton, QFrame
-from PyQt5.QtGui import QPixmap, QImage
+from PyQt5.QtGui import QPixmap, QImage,QLinearGradient, QPainter, QColor
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, Qt 
 import cv2
 import queue
@@ -11,6 +11,7 @@ import struct
 import os 
 import datetime 
 import numpy as np
+import colorsys
 
 MAX_DGRAM = 65507  # UDP의 최대 패킷 크기
 
@@ -300,20 +301,36 @@ class InputFaceDialog(QDialog):
         if event.key() == Qt.Key_Q:
             self.close()  # 다이얼로그 종료
 
+
+
 class ClothPopDialog(QDialog):
     def __init__(self):
         super().__init__()
 
+        self.top_color = None
+        self.bottom_color = None
+        
         # cloth_pop.ui 파일 로드
         uic.loadUi('UI_file/cloth_pop.ui', self)
-
-        # QLabel 찾기 (spectrum_image1, spectrum_image2)
-        self.spectrum_image1 = self.findChild(QLabel, 'spectrum_image1')
-        self.spectrum_image2 = self.findChild(QLabel, 'spectrum_image2')
 
         # QFrame 찾기 (color1, color2)
         self.color_frame1 = self.findChild(QFrame, 'color1')
         self.color_frame2 = self.findChild(QFrame, 'color2')
+
+        # Top 버튼들
+        top_buttons = ['Red', 'Red2', 'Orange', 'Yellow', 'Green', 
+                       'Blue', 'Navy', 'Violet', 'White', 'Black', 'Gray']
+        for name in top_buttons:
+            button = self.findChild(QPushButton, name)
+            button.clicked.connect(self.set_color)
+
+        # Bottom 버튼들
+        bottom_buttons = ['Red_2', 'Red2_2', 'Orange_2', 'Yellow_2',
+                          'Green_2','Blue_2', 'Navy_2',
+                          'Violet_2', 'White_2','Black_2', 'Gray_2']
+        for name in bottom_buttons:
+            button = self.findChild(QPushButton, name)
+            button.clicked.connect(self.set_color)
 
         # QDialogButtonBox 찾기
         self.dialog_button_box = self.findChild(QDialogButtonBox, 'register_button')
@@ -322,68 +339,90 @@ class ClothPopDialog(QDialog):
         if self.dialog_button_box is not None:
             self.dialog_button_box.accepted.connect(self.show_find_man)
 
-        # spectrum.png 이미지를 OpenCV로 로드 (픽셀 처리)
-        self.cv_image = cv2.imread('./etc_images/spectrum.png')
-        self.cv_image = cv2.cvtColor(self.cv_image, cv2.COLOR_BGR2RGB)  # BGR을 RGB로 변환
+    def set_color(self):
+        button = self.sender()
+        object_name = button.objectName()
 
-        # QLabel에 이미지 설정
-        height, width, channel = self.cv_image.shape
-        bytes_per_line = 3 * width
-        q_image = QImage(self.cv_image.data, width, height, bytes_per_line, QImage.Format_RGB888)
-        pixmap = QPixmap.fromImage(q_image)
+        # Color range에 맞게 색상 설정
+        if '_' in object_name:
+    # '_'로 나눈 첫 번째 부분만 가져와서 bottom_color에 저장
+            self.bottom_color = object_name.split('_')[0].lower()
+            print(f"bottom_color: {self.bottom_color}")
+            color_range = self.get_color_range(self.bottom_color)  # object_name 대신 수정된 bottom_color로 전달
+            self.set_frame_color(self.color_frame2, color_range)  # Bottom 프레임에 색상 설정
+        else:
+            self.top_color = object_name.lower()
+            print(f"top_color : {self.top_color}")
+            color_range = self.get_color_range(object_name)
+            self.set_frame_color(self.color_frame1, color_range)  # Top 프레임에 색상 설정
 
-        self.spectrum_image1.setPixmap(pixmap)
-        self.spectrum_image2.setPixmap(pixmap)
+    def get_color_range(self, object_name):
+        color_ranges = {
+            'red1': [(0, 100, 100), (10, 255, 255)],
+            'red2': [(170, 100, 100), (180, 255, 255)],
+            'orange': [(10, 100, 100), (25, 255, 255)],
+            'yello': [(25, 100, 100), (35, 255, 255)],
+            'green': [(35, 100, 100), (85, 255, 255)],
+            'blue': [(85, 100, 100), (125, 255, 255)],
+            'navy': [(125, 100, 100), (140, 255, 255)],
+            'violet': [(140, 100, 100), (170, 255, 255)],
+            'white': [(0, 0, 180), (180, 30, 255)],
+            'gray': [(0, 0, 100), (180, 30, 180)],
+            'black': [(0, 0, 1), (180, 50, 100)]
+        }
+        return color_ranges.get(object_name, [(0, 0, 0), (0, 0, 0)])
 
-        # spectrum_image1, spectrum_image2 클릭 이벤트 연결
-        self.spectrum_image1.mousePressEvent = self.get_color_from_image1
-        self.spectrum_image2.mousePressEvent = self.get_color_from_image2
+    def set_frame_color(self, frame, color_range):
+        # HSV -> RGB 변환 후 QFrame에 배경색 적용
+        lower_hsv, upper_hsv = color_range
 
-    def get_color_from_image1(self, event):
-        x = event.pos().x()
-        y = event.pos().y()
-        color = self.find_nearest_color(x, y)
-        
-        if color is not None:
-            color_hex = '#{:02x}{:02x}{:02x}'.format(color[0], color[1], color[2])
-            self.color_frame1.setStyleSheet(f"background-color: {color_hex};")
-            print(f"Color1: {color_hex}")
-
-    def get_color_from_image2(self, event):
-        x = event.pos().x()
-        y = event.pos().y()
-        color = self.find_nearest_color(x, y)
-        
-        if color is not None:
-            color_hex = '#{:02x}{:02x}{:02x}'.format(color[0], color[1], color[2])
-            self.color_frame2.setStyleSheet(f"background-color: {color_hex};")
-            print(f"Color2: {color_hex}")
-
-    def find_nearest_color(self, x, y, search_radius=5):
-        """
-        클릭한 좌표 (x, y)를 중심으로 주어진 반경 내에서 가장 가까운 흰색이 아닌 색을 찾는 함수
-        """
-        height, width, _ = self.cv_image.shape
-        
-        # 흰색으로부터 얼마나 벗어나야 흰색이 아닌 것으로 간주할지 설정
-        tolerance = 10
-        
-        # 탐색 범위를 설정
-        for radius in range(1, search_radius+1):
-            for i in range(max(0, x-radius), min(width, x+radius+1)):
-                for j in range(max(0, y-radius), min(height, y+radius+1)):
-                    color = self.cv_image[j, i]  # (y, x) 좌표에서 RGB 값을 가져옴
-                    if not all([abs(c - 255) < tolerance for c in color]):
-                        # 흰색이 아닌 색을 찾으면 반환
-                        return color
-        
-        # 만약 흰색이 아닌 색을 찾지 못했다면, 흰색 반환
-        return np.array([255, 255, 255])
+        # 상한 HSV 값을 사용하여 RGB로 변환 (더 강한 색상을 나타내기 위해)
+        h, s, v = upper_hsv
+        r, g, b = colorsys.hsv_to_rgb(h / 180, s / 255, v / 255)
+        color_hex = f'#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}'  # RGB 값을 HEX 코드로 변환
+        print(color_hex)
+        # QFrame의 스타일시트로 배경색 설정
+        frame.setStyleSheet(f"background-color: {color_hex};")
 
 
-    def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Q:
-            self.close()  # 다이얼로그 종료
+# 새로운 QFrame 클래스 정의 (그라데이션을 그릴 수 있는 프레임)
+class GradientFrame(QFrame):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.color_range = None  # 그라데이션 색상 범위
+
+    def set_gradient(self, color_range):
+        self.color_range = color_range
+        self.update()  # 프레임을 갱신하여 paintEvent를 호출
+
+    def paintEvent(self, event):
+        if self.color_range is None:
+            return  # 색상 범위가 설정되지 않으면 아무 작업도 하지 않음
+
+        lower_hsv, upper_hsv = self.color_range
+
+        painter = QPainter(self)
+        if not painter.isActive():
+            print("Painter is not active")
+            return
+
+        gradient = QLinearGradient(0, 0, self.width(), 0)  # 수평 그라데이션
+
+        # HSV -> RGB 변환 후 그라데이션 설정
+        h_start, s_start, v_start = lower_hsv[0] / 180, lower_hsv[1] / 255, lower_hsv[2] / 255
+        h_end, s_end, v_end = upper_hsv[0] / 180, upper_hsv[1] / 255, upper_hsv[2] / 255
+
+        for i in range(11):
+            ratio = i / 10
+            h = h_start + ratio * (h_end - h_start)
+            s = s_start + ratio * (s_end - s_start)  # 채도 그라데이션
+            v = v_start + ratio * (v_end - v_start)  # 명도 그라데이션
+            r, g, b = colorsys.hsv_to_rgb(h, s, v)
+            gradient.setColorAt(ratio, QColor(int(r * 255), int(g * 255), int(b * 255)))
+
+        # 프레임 전체에 그라데이션 적용
+        painter.fillRect(self.rect(), gradient)
+        painter.end()
 
 class FindManWindow(QMainWindow):
     def __init__(self, gmanager):
@@ -465,7 +504,7 @@ class checkManDialog(QDialog) :
 
         check_image = self.check_image
         
-        image_check = QPixmap('./check_image/chckman_image.png') # 사진 확인 경로 수정
+        image_check = QPixmap('./check_image/checkman_image.png') # 사진 확인 경로 수정
         
         if check_image is not None :
             check_image.setPixmap(image_check)
