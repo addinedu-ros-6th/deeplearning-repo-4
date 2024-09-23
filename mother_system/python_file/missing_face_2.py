@@ -26,7 +26,7 @@ class Missing_face:
         """
         # 이미 임베딩이 생성되었으면 재사용
         if self.ref_embedding is not None:
-            print("참조 이미지 임베딩이 이미 생성되었습니다. 다시 생성하지 않습니다.")
+            #print("참조 이미지 임베딩이 이미 생성되었습니다. 다시 생성하지 않습니다.")
             return True
 
         try:
@@ -44,7 +44,7 @@ class Missing_face:
 
             # 리스트를 NumPy 배열로 변환
             self.ref_embedding = np.array(self.ref_embedding)
-            print(f"참조 이미지 임베딩 생성 성공: {image_path}")
+            #print(f"참조 이미지 임베딩 생성 성공: {image_path}")
             return True
         except Exception as e:
             print(f"참조 이미지 임베딩 생성 오류: {e}")
@@ -54,20 +54,20 @@ class Missing_face:
         self.frame = frame
         # YOLOv8을 사용하여 얼굴 검출
         results = self.model(self.frame)
-
+        center = None
         # 결과에서 얼굴 박스 추출
         for result in results:
             boxes = result.boxes  # 바운딩 박스 리스트
-            print(f"Detected boxes: {boxes}")
+            #print(f"Detected boxes: {boxes}")
             for box in boxes:
                 # 바운딩 박스 좌표 및 기타 정보 추출
                 x1, y1, x2, y2 = map(int, box.xyxy[0])  # 좌표
                 conf = box.conf.item()  # 신뢰도 값을 스칼라로 변환
-                print(f"Box coordinates: {x1}, {y1}, {x2}, {y2}, Confidence: {conf}")
+                #print(f"Box coordinates: {x1}, {y1}, {x2}, {y2}, Confidence: {conf}")
 
                 # 신뢰도 임계값 확인
                 if conf > 0.5:
-                    print(f"Face detected with confidence: {conf}")
+                    #print(f"Face detected with confidence: {conf}")
                     # 얼굴 영역 추출
                     face_image = frame[y1:y2, x1:x2]
 
@@ -78,7 +78,7 @@ class Missing_face:
                             model_name='Facenet',
                             enforce_detection=False
                         )[0]["embedding"]
-                        print("Face embedding generated successfully")
+                        #print("Face embedding generated successfully")
 
                         # 리스트를 NumPy 배열로 변환
                         face_embedding = np.array(face_embedding)
@@ -114,7 +114,8 @@ class Missing_face:
                                     cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                                     cv2.putText(frame, f'Double-check By AWS: {similarity_by_aws:.2f}%', (x1, y1 - 10),
                                                 cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
-                                    print(f"얼굴 일치: AWS 유사도 {similarity_by_aws:.2f}%")
+                                    center = ((x1 + x2)/2, (y1+y2)/2)
+                                    #print(f"얼굴 일치: AWS 유사도 {similarity_by_aws:.2f}%")
 
                                     # AWS 유사도가 95% 이상이고 캡쳐가 아직 안되었다면 이미지 저장
                                     if similarity_by_aws >= 95 and not self.capture_done:
@@ -129,11 +130,11 @@ class Missing_face:
                             cv2.rectangle(self.frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
                             cv2.putText(self.frame, f"Low Similarity: {similarity:.2f}%", (x1, y1 - 10),
                                         cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 0), 2)
-                            print("Low similarity detected, marking in red.")
+                            #print("Low similarity detected, marking in red.")
 
                     except Exception as e:
                         print(f"Face processing error: {e}")
                         cv2.rectangle(self.frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
                         cv2.putText(self.frame, 'Error processing face', (x1, y1 - 10),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
-        return self.frame
+        return self.frame, center

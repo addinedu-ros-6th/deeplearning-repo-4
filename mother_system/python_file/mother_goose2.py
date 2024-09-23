@@ -34,7 +34,7 @@ ANIMATION_DURATION = 8000  # 창 크기 조정 애니메이션 지속 시간 (�
 FRAME_WIDTH = 640
 FRAME_HEIGHT = 480
 
-mother_req = 11
+mother_req = 23
 stop_event = threading.Event()
 
 class DManager:
@@ -181,7 +181,40 @@ class DManager:
                                     thickness=2)
 
                 print(self.location_key_cls_and_color_value)
-        
+
+            elif mother_req == 23:
+                self.frame, self.id_key_location_value = self.Tracker.run_tracking(self.frame)
+                self.frame, self.location_key_cls_and_color_value = self.MissingDetect.inference_MP_Detect2(self.frame)
+                # self.frame = cv2.putText(img=self.frame, text="MISSING", \
+                #                     org=(30, 30), \
+                #                     fontFace=cv2.FONT_HERSHEY_SIMPLEX,\
+                #                     fontScale=2, color=(0, 0, 255),\
+                #                     thickness=2)
+                
+                image_path = './face_images/face_image.jpg'
+                if self.MissingFace.load_reference_image(image_path):
+                    print("참조 이미지 임베딩이 성공적으로 생성되었습니다.")
+                    self.frame, face_center = self.MissingFace.face_similarity(self.frame)
+                #print(self.location_key_cls_and_color_value)
+                #print(self.id_key_location_value)
+                
+                self.information = self.merge_information(self.id_key_location_value, self.location_key_cls_and_color_value)
+                print(self.information)
+                
+                self.motor_track_id = self.find_id(self.information, face_center, self.motor_track_id)
+                print('추적대상 : ', self.motor_track_id)
+
+            elif mother_req == 24:
+                self.frame, self.id_key_location_value = self.Tracker.run_tracking(self.frame)
+                self.frame, self.location_key_cls_and_color_value = self.MissingDetect.inference_MP_Detect2(self.frame)
+                self.frame = cv2.putText(img=self.frame, text="MISSING", \
+                                    org=(30, 30), \
+                                    fontFace=cv2.FONT_HERSHEY_SIMPLEX,\
+                                    fontScale=2, color=(0, 0, 255),\
+                                    thickness=2)
+                
+                self.information = self.merge_information(self.id_key_location_value, self.location_key_cls_and_color_value)
+                print(self.information)        
 
             # elif mother_req == 40:
             #     self.frame = self.MissingFace.face_similarity(self.frame)
@@ -189,6 +222,64 @@ class DManager:
             # g-manager 에게 보낼 데이터 정리
             self.d_pipe.send((mother_req, self.is_identified, self.frame))
 
+    def find_id(self, information_dict, find_center, motor_track_id=None, threshold=50):
+        """
+        information_dict에서 find_center의 X좌표와 가장 가까운 값을 가진 'center' 키를 찾아 motor_track_id로 설정하여 반환하는 함수.
+        threshold 값은 X좌표 차이가 얼마까지 허용되는지를 결정.
+        """
+        if find_center is not None:
+            find_x = find_center[0]  # find_center의 X좌표
+
+        closest_id = None
+        closest_distance = float('inf')  # 비교할 최소 거리를 무한대로 설정
+
+        # information_dict를 순회하면서 'center'의 X좌표와 비교
+        if find_center is not None:
+            for track_id, info in information_dict.items():
+                center_x = info['center'][0]  # 각 객체의 'center' X좌표
+                
+                # X좌표 차이를 계산
+                distance = abs(find_x - center_x)
+
+                # 거리가 threshold 이내일 경우에만 motor_track_id로 설정
+                if distance <= threshold and distance < closest_distance:
+                    closest_distance = distance
+                    closest_id = track_id  # 가장 가까운 ID 업데이트
+
+        # closest_id가 찾은 결과가 있으면 motor_track_id로 설정, 없으면 기본 motor_track_id 유지
+        motor_track_id = closest_id if closest_id is not None else motor_track_id
+
+        return motor_track_id
+
+
+    def merge_information(self, deepsort_dict, segmentation_dict, threshold=50):
+        # information 딕셔너리 초기화
+        information = {}
+        if len(deepsort_dict) > 0:
+            for deep_id, deep_center in deepsort_dict.items():
+                # 기본 구조를 None으로 설정
+                information[deep_id] = {
+                    1: None,  # 상의 클래스 (1)
+                    2: None,  # 하의 클래스 (2)
+                    'center': deep_center  # deepsort 박스의 중심좌표
+                }
+
+                # deepsort 박스 중심의 X좌표
+                deep_x = deep_center[0]
+
+                # segmentation_dict에서 비슷한 X좌표를 가진 바운딩 박스를 찾음
+                for seg_center, (cls, color) in segmentation_dict.items():
+                    seg_x = seg_center[0]
+
+                    # X좌표 차이가 threshold 이내일 경우 같은 객체로 간주
+                    if abs(deep_x - seg_x) <= threshold:
+                        # cls 값에 따라 상의 또는 하의 값을 업데이트
+                        if cls == 1:  # 상의 클래스
+                            information[deep_id][1] = color
+                        elif cls == 2:  # 하의 클래스
+                            information[deep_id][2] = color
+
+        return information
     
     def camera_and_modelsel(self):
         self.cap = cv2.VideoCapture(0)

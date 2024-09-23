@@ -32,6 +32,7 @@ def convert_detections(detections, threshold, classes):
 
 # Function for bounding box and ID annotation.
 def annotate(tracks, frame, resized_frame, frame_width, frame_height, colors):
+    id_and_location = {} 
     for track in tracks:
         if not track.is_confirmed():
             continue
@@ -67,4 +68,6 @@ def annotate(tracks, frame, resized_frame, frame_width, frame_height, colors):
         # Draw a small circle at the center of the bounding box
         cv2.circle(frame, (x_mid, y_mid), 3, (0, 255, 0), 2)
 
-    return frame
+        id_and_location[track_id] = (x_mid, y_mid)
+
+    return frame, id_and_location
