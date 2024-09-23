@@ -122,6 +122,7 @@ class Missing_face:
                                         cv2.imwrite(capture_path, self.frame)
                                         print(f"캡쳐 저장됨: {capture_path}")
                                         self.capture_done = True
+
                                         
                         else:
                             # 유사도가 88% 미만인 경우

@@ -146,6 +146,11 @@ class DManager:
                     print("참조 이미지 임베딩이 성공적으로 생성되었습니다.")
                     self.frame = self.MissingFace.face_similarity(self.frame)
 
+                    self.frame = cv2.putText(img=self.frame, text="Similarity", \
+                    org=(30, 30), \
+                    fontFace=cv2.FONT_HERSHEY_SIMPLEX,\
+                    fontScale=2, color=(0, 0, 255),\
+                    thickness=2)
                     # AWS 유사도가 95% 이상이고 캡쳐가 완료되지 않았다면
                     if self.MissingFace.capture_done:
                         print("Image already captured.")
@@ -153,11 +158,6 @@ class DManager:
                     else:
                         continue
 
-                    self.frame = cv2.putText(img=self.frame, text="Similarity", \
-                    org=(30, 30), \
-                    fontFace=cv2.FONT_HERSHEY_SIMPLEX,\
-                    fontScale=2, color=(0, 0, 255),\
-                    thickness=2)
         
                 else:
                     print("참조 이미지 로딩에 실패했습니다.")

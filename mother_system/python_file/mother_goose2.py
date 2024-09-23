@@ -167,28 +167,10 @@ class DManager:
                     print("참조 이미지 임베딩이 성공적으로 생성되었습니다.")
                     self.frame = self.MissingFace.face_similarity(self.frame)
 
-                    # AWS 유사도가 95% 이상이고 캡쳐가 완료되지 않았다면
-                    if self.MissingFace.capture_done:
-                        print("Image already captured.")
-                        self.d_pipe.send(27)
-                    else:
-                        continue
-
-                    self.frame = cv2.putText(img=self.frame, text="Similarity", \
-                    org=(30, 30), \
-                    fontFace=cv2.FONT_HERSHEY_SIMPLEX,\
-                    fontScale=2, color=(0, 0, 255),\
-                    thickness=2)
                 else:
                     print("참조 이미지 로딩에 실패했습니다.")
-            
-            #elif mother_req == 222222: #Missing Detector
-            #    self.frame = self.MissingDetect.inference_MP_Detect(self.frame)
-            #    self.frame = cv2.putText(img=self.frame, text="MISSING", \
-            #                        org=(30, 30), \
-            #                        fontFace=cv2.FONT_HERSHEY_SIMPLEX,\
-            #                        fontScale=2, color=(0, 0, 255),\
-            #                        thickness=2)
+
+
             #
             elif mother_req == 22:
                 self.frame,self.location_key_cls_and_color_value = self.MissingDetect.inference_MP_Detect2(self.frame)
