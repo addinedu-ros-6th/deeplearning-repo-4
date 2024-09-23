@@ -13,7 +13,7 @@ class Missing_face:
         ####################################################
         """GUI에서 사람찾기 클릭하여, 캡쳐된 사진 위치로 설정하기"""
         # 제공된 참조 이미지 로드
-        self.reference_image_path = "./boseong1.jpg"
+        self.reference_image_path = "./face_images/face_image.jpg"
         self.reference_image = cv2.imread(self.reference_image_path)
         ####################################################
 
@@ -32,7 +32,7 @@ class Missing_face:
             exit()
 
         # YOLOv8 얼굴 검출 모델 로드
-        self.model = YOLO('./yolov8n-face.pt')  # 얼굴 검출용으로 학습된 모델
+        self.model = YOLO('./models/yolov8n-face.pt')  # 얼굴 검출용으로 학습된 모델
 
         self.image_format = 'png'  # 'jpg'로 바꾸면 JPEG로 인코딩
 
