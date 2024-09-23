@@ -486,6 +486,7 @@ class TrackingManWindow(QMainWindow) :
         super().__init__()
         self.gmanager = gmanager 
         self.main_window = main_window
+        
         uic.loadUi('UI_file/tracking_man.ui', self)
         
         map_image = self.findChild(QLabel, 'tracking_map')
