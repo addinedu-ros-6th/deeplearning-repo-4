@@ -77,8 +77,8 @@ class MainWindow(QMainWindow):
         map1_label = self.airport_info_window.findChild(QLabel, 'map1')
         map2_label = self.airport_info_window.findChild(QLabel, 'map2')
         
-        pixmap1 = QPixmap('./etc_images/airport_map1.png')
-        pixmap2 = QPixmap('./etc_images/airport_map2.png')
+        pixmap1 = QPixmap('./etc_images/Maple_Mini_map.png')
+        pixmap2 = QPixmap('./etc_images/maple_world_map.png')
         
         if map1_label is not None :
             map1_label.setPixmap(pixmap1)
@@ -128,7 +128,7 @@ class InputFaceDialog(QDialog):
         self.webcam_label = self.findChild(QLabel, 'input_video')
       
         # OpenCV를 사용하여 웹캠 연결
-        self.cap = cv2.VideoCapture(2)
+        self.cap = cv2.VideoCapture(0)
 
         # 얼굴 인식을 위한 Haar Cascade XML 파일 경로 설정
         
@@ -137,7 +137,7 @@ class InputFaceDialog(QDialog):
 
         # QTimer 설정하여 주기적으로 프레임 업데이트
         self.timer = QTimer(self)
-        self.timer.timeout.connect(self.update_frame)
+        self.timer.timeout.connect(self.update_frame1)
         self.timer.start(25)  # 30ms마다 업데이트
         
         print("1")
@@ -183,7 +183,7 @@ class InputFaceDialog(QDialog):
         event.accept()
 
     # 웹캠 프레임을 QLabel에 업데이트하고 얼굴 인식 후 저장
-    def update_frame(self):
+    def update_frame1(self):
         ret, frame = self.cap.read()
         
         if ret == True:
@@ -398,11 +398,23 @@ class FindManWindow(QMainWindow):
         self.goose_video1 = self.findChild(QLabel, 'goose_video1')
         self.goose_video2 = self.findChild(QLabel, 'goose_video2')
         self.goose_video3 = self.findChild(QLabel, 'goose_video3')
+        
+        self.find_button = self.findChild(QDialogButtonBox, 'find_button')
+        
 
         # QTimer 설정하여 주기적으로 프레임 업데이트
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_frame)
         self.timer.start(1)  # Update every 30 milliseconds
+        
+        self.find_button.accepted.connect(self.show_check_man)
+    
+        
+    def show_check_man(self) :
+        print("check_man.ui실행")
+        self.check_man_dialog = checkManDialog(self.gmanager, self)
+        self.check_man_dialog.show()
+        
 
     # 프레임을 QLabel에 업데이트하는 함수
     def update_frame(self):
@@ -411,7 +423,7 @@ class FindManWindow(QMainWindow):
             mother_req, is_identified, frame = self.gmanager.to_gui_queue.get()
             if is_identified:
                 self.is_identified = True
-
+                self.show_check_man_dialog()##
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             h, w, ch = frame_rgb.shape
             bytes_per_line = ch * w
@@ -424,6 +436,11 @@ class FindManWindow(QMainWindow):
             # QLabel에 이미지 설정
             self.goose_video1.setPixmap(QPixmap.fromImage(q_img))
 
+    ##
+    def show_check_man_dialog(self) :
+        print("check_man호출")
+        self.show_check_man()
+    
     # 창 닫을 때 타이머 정지
     def closeEvent(self, event):
         self.timer.stop()
@@ -434,6 +451,63 @@ class FindManWindow(QMainWindow):
             QApplication.quit()  # 프로그램 종료
         else:
             super().keyPressEvent(event)
+
+
+class checkManDialog(QDialog) :
+    def __init__(self, gmanager, main_window) :
+        super().__init__()
+        self.gmanager = gmanager
+        self.main_window = main_window
+        
+        uic.loadUi('UI_file/check_man.ui', self) # ui불러오기
+        self.check_image = self.findChild(QLabel, 'check_image')
+        self.check_button = self.findChild(QDialogButtonBox, 'check_button')
+
+        check_image = self.check_image
+        
+        image_check = QPixmap('./check_image/chckman_image.png') # 사진 확인 경로 수정
+        
+        if check_image is not None :
+            check_image.setPixmap(image_check)
+        else :
+            print("no search check_image")
+        
+        #버튼 수락 시 show_tracking_man호출
+        self.check_button.accepted.connect(self.show_tracking_man)
+        
+    def show_tracking_man(self) :
+        print("Tracking_man.ui 실행")
+        self.tracking_man_window = TrackingManWindow(self.gmanager, self.main_window)
+        self.tracking_man_window.show()
+        self.close() # Dialog 종료
+        
+class TrackingManWindow(QMainWindow) :
+    def __init__(self, gmanager, main_window) :
+        super().__init__()
+        self.gmanager = gmanager 
+        self.main_window = main_window
+        uic.loadUi('UI_file/tracking_man.ui', self)
+        
+        map_image = self.findChild(QLabel, 'tracking_map')
+        map_path = QPixmap('./etc_images/Maple_Mini_map.png')
+        
+        if map_image is not None :
+            map_image.setPixmap(map_path)
+        
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.call_update_frame)
+        self.timer.start(1)  # Update every 30 milliseconds
+        
+        
+    def call_update_frame(self) :
+        self.main_window.update_frame()      
+    
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Q:
+            QApplication.quit()  # 프로그램 종료
+        else:
+            super().keyPressEvent(event)
+        
 
 #if __name__ == '__main__':
 #  #  app = QApplication(sys.argv)
