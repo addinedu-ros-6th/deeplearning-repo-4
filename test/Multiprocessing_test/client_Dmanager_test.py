@@ -15,7 +15,8 @@ except ModuleNotFoundError:
     serial = MagicMock()
 
 # 서버 IP 및 포트 설정
-SERVER_IP = '127.0.0.1'
+SERVER_IP = '192.168.0.51'
+# SERVER_IP = '127.0.0.1'
 UDP_PORT = 9999
 TCP_PORT = 8888
 MAX_DGRAM = 65507 - 1
@@ -104,7 +105,7 @@ try:
 
         #receive_and_move_servos()
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        if cv2.waitKey(30) & 0xFF == ord('q'):
             break
 
 except KeyboardInterrupt:

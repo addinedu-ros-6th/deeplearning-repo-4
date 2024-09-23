@@ -30,7 +30,8 @@ class DeepSortTrack:
         parser.add_argument('--embedder', default='torchreid', help='type of feature extractor to use', choices=[
             "mobilenet", "torchreid", "clip_RN50", "clip_RN101", "clip_RN50x4", "clip_RN50x16", "clip_ViT-B/32", "clip_ViT-B/16"
         ])
-        parser.add_argument('--show', action='store_true', help='visualize results in real-time on screen')
+        parser.add_argument('--show', action='store_true', help='visualize results in real-time on screen', default=True)
+
         parser.add_argument('--cls', nargs='+', default=[1], help='which classes to track', type=int)
         self.args = parser.parse_args()
 
@@ -50,7 +51,7 @@ class DeepSortTrack:
         self.tracker = DeepSort(max_age=90, embedder=self.args.embedder)
 
         # Open webcam
-        # self.cap = cv2.VideoCapture(0)
+        #self.cap = cv2.VideoCapture(0)
 
     def inference_DT_Detect(self, frame):
         # 프레임을 적절한 포맷으로 변환
@@ -103,6 +104,32 @@ class DeepSortTrack:
         self.cap.release()
         cv2.destroyAllWindows()
 
-if __name__ == "__main__":
-    tracker = DeepSortTrack()
-    tracker.run()
+    def run_tracking(self, frame):
+        frame_count = 0
+        total_fps = 0
+        
+        frame = frame
+            
+        if self.args.imgsz:
+            resized_frame = cv2.resize(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), (self.args.imgsz, self.args.imgsz))
+        else:
+            resized_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        frame_tensor = ToTensor()(resized_frame).to(self.device)
+
+        start_time = time.time()
+        with torch.no_grad():
+            detections = self.model([frame_tensor])[0]
+
+        detections = convert_detections(detections, self.args.threshold, self.args.cls)
+
+        tracks = self.tracker.update_tracks(detections, frame=frame)
+
+        fps = 1 / (time.time() - start_time)
+        total_fps += fps
+        frame_count += 1
+
+        if len(tracks) > 0:
+            frame = annotate(tracks, frame, resized_frame, frame.shape[1], frame.shape[0], self.COLORS)
+
+        return frame

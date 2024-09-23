@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 
+track_id = []
 # Define a function to convert detections to SORT format.
 def convert_detections(detections, threshold, classes):
     # Get the bounding boxes, labels and scores from the detections dictionary.
@@ -65,4 +66,5 @@ def annotate(tracks, frame, resized_frame, frame_width, frame_height, colors):
 
         # Draw a small circle at the center of the bounding box
         cv2.circle(frame, (x_mid, y_mid), 3, (0, 255, 0), 2)
+
     return frame

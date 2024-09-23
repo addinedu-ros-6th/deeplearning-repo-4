@@ -15,7 +15,7 @@ except ModuleNotFoundError:
     serial = MagicMock()
 
 # 서버 IP 및 포트 설정
-SERVER_IP = '127.0.0.1'
+SERVER_IP = '192.168.0.51'
 UDP_PORT = 9999
 TCP_PORT = 8888
 MAX_DGRAM = 65507 - 1
@@ -24,7 +24,7 @@ MAX_DGRAM = 65507 - 1
 udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 # 웹캠 열기 (0번 카메라 사용)
-cap = cv2.VideoCapture(2)
+cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 

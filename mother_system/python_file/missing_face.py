@@ -108,9 +108,10 @@ class Missing_face:
                         cv2.putText(self.frame, 'face sorted error', (x1, y1 - 10),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
 
-        # # 비교 이미지 프레임에 삽입
-        # ref_img_resized = cv2.resize(self.reference_image, (150, 150))  # 크기를 조절
-        # self.frame[10:160, 10:160] = ref_img_resized  # 좌측 상단에 삽입
+
+        # 비교 이미지 프레임에 삽입
+        ref_img_resized = cv2.resize(self.reference_image, (150, 150))  # 크기를 조절
+        self.frame[10:160, 10:160] = ref_img_resized  # 좌측 상단에 삽입
         
 
-        return frame
+        return self.frame
