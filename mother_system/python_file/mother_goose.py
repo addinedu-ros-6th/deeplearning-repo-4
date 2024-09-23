@@ -16,4 +16,3 @@ if __name__ == "__main__":
     d_process.start()
 
     g_process.join()
-    d_process.join()
