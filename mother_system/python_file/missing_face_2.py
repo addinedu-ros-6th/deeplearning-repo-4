@@ -66,7 +66,7 @@ class Missing_face:
                 print(f"Box coordinates: {x1}, {y1}, {x2}, {y2}, Confidence: {conf}")
 
                 # 신뢰도 임계값 확인
-                if conf > 0.5:
+                if conf > 0.65:
                     print(f"Face detected with confidence: {conf}")
                     # 얼굴 영역 추출
                     face_image = frame[y1:y2, x1:x2]
@@ -93,7 +93,7 @@ class Missing_face:
                         similarity = (cosine_similarity + 1) / 2 * 100
 
                         # 유사도가 88% 이상인 경우 AWS Rekognition으로 확인
-                        if similarity >= 88:
+                        if similarity >= 95:
                             # 얼굴 이미지를 AWS Rekognition에 보낼 수 있도록 인코딩
                             encode_format = '.jpg' if self.image_format == 'jpg' else '.png'
                             _, face_buffer = cv2.imencode(encode_format, face_image)
