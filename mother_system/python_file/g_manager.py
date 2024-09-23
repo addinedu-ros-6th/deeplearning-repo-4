@@ -12,8 +12,8 @@ stop_event = threading.Event()
 class GManager:
     def __init__(self):
         self.goose_tcp = GooseTcp()
-        self.gui_queue = queue.Queue()
-        self.comm_queue = queue.Queue()
+        self.from_gui_queue = queue.Queue()
+        self.to_gui_queue = queue.Queue()
         
     def set_request_json(self, baby_goose_ip):
         """baby goose 에게 전송할 data json 생성"""
@@ -30,17 +30,16 @@ class GManager:
         while True:
             # 먼저 파이프를 체크합니다.
             if g_pipe.poll():
-                frame = g_pipe.recv()
-                print("poll!!!")
-                self.comm_queue.put(frame)
+                recv_data = g_pipe.recv()
+                self.to_gui_queue.put(recv_data)
             
             # gui_queue를 비블로킹으로 체크합니다.
             try:
-                data = self.gui_queue.get_nowait()
-                if data is None:
+                gui_req = self.from_gui_queue.get_nowait()
+                if gui_req is None:
                     break
-                print(f"Communicator : {data}")
-                self.gui_queue.task_done()
+                g_pipe.send(gui_req)
+                self.from_gui_queue.task_done()
             except queue.Empty:
                 pass  # 큐가 비어 있으면 넘어갑니다.
 
