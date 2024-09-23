@@ -3,12 +3,10 @@ import cv2
 from WetFloorDetector import WetFloorDetect
 from MissingDetector import MissingDetect
 import socket
-import json
 import struct
 import numpy as np
-import base64
 
-MAX_DGRAM = 65507  # UDP의 최대 패킷 크기
+MAX_DGRAM = 1400  # 패킷 단편화를 방지하기 위해 패킷 크기를 줄임
 UDP_PORT = 9999
 TCP_PORT = 8888  # 헬스 체크용 TCP 포트
 FRAME_WIDTH = 640  # 수신되는 영상의 너비
@@ -31,12 +29,11 @@ class DManager:
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.udp_socket.bind(('0.0.0.0', UDP_PORT))
+        self.udp_socket.settimeout(0.5)  # 타임아웃 설정
 
-        # TCP 소켓 설정 (좌표 및 이동 값 전송)
-        self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.tcp_socket.bind(('0.0.0.0', TCP_PORT))
-        self.tcp_socket.listen(5)
+        # 프레임 버퍼 초기화
+        self.frame_buffer = {}
+        self.last_frame_id = None
 
     def process_input(self):
         global mother_req
@@ -49,39 +46,71 @@ class DManager:
             except ValueError:
                 print("올바른 숫자를 입력하세요.")
     
-    def receive_json_data(self):
+    def receive_frame(self):
         """
-        클라이언트로부터 JSON 데이터 수신 및 복원 함수.
+        프레임 데이터를 수신하고 재조합하는 함수.
         """
-        buffer = b""
         while True:
-            chunk, addr = self.udp_socket.recvfrom(MAX_DGRAM)
-            is_last_chunk = struct.unpack('B', chunk[:1])[0]  # 첫 바이트가 마지막 청크 여부를 나타냄
-            buffer += chunk[1:]  # 실제 데이터는 2번째 바이트부터
+            try:
+                packet, addr = self.udp_socket.recvfrom(MAX_DGRAM)
+                if not packet:
+                    continue
 
-            if is_last_chunk:
-                break
+                # 헤더 파싱: frame_id(1바이트), total_chunks(1바이트), seq_num(1바이트), data_len(2바이트), bg_num(1바이트), br_code(1바이트)
+                header_format = '=BBBHBB'  # 패딩 없음
+                header_size = struct.calcsize(header_format)  # 7 bytes
+                if len(packet) < header_size:
+                    print("패킷 크기가 헤더 크기보다 작습니다.")
+                    continue
 
-        # 수신된 JSON 데이터 복원
-        try:
-            json_data = json.loads(buffer.decode('utf-8'))
-            return json_data
-        except Exception as e:
-            print(f"JSON 데이터 복원 오류: {e}")
-            return None
-    
+                header = packet[:header_size]
+                frame_id, total_chunks, seq_num, data_len, bg_num, br_code = struct.unpack(header_format, header)
+                data = packet[header_size:]
+
+                if len(data) != data_len:
+                    print("데이터 길이 불일치")
+                    continue
+
+                if frame_id not in self.frame_buffer:
+                    self.frame_buffer[frame_id] = {'total_chunks': total_chunks, 'chunks': {}, 'bg_num': bg_num, 'br_code': br_code}
+
+                self.frame_buffer[frame_id]['chunks'][seq_num] = data
+
+                # 모든 청크를 수신했는지 확인
+                if len(self.frame_buffer[frame_id]['chunks']) == total_chunks:
+                    # 프레임 조합
+                    chunks = [self.frame_buffer[frame_id]['chunks'][i] for i in range(total_chunks)]
+                    frame_data = b''.join(chunks)
+                    # 프레임 디코딩
+                    frame = cv2.imdecode(np.frombuffer(frame_data, dtype=np.uint8), cv2.IMREAD_COLOR)
+                    if frame is not None:
+                        # bg_num과 br_code를 사용하여 필요한 처리를 할 수 있습니다.
+                        print(f"Received frame_id: {frame_id}, bg_num: {bg_num}, br_code: {br_code}")
+                        self.last_frame_id = frame_id
+                        del self.frame_buffer[frame_id]  # 사용된 버퍼 삭제
+                        return frame, bg_num, br_code
+                    else:
+                        print("프레임 디코딩 실패")
+                        del self.frame_buffer[frame_id]  # 오류 발생 시 버퍼 삭제
+            except socket.timeout:
+                # 타임아웃 발생 시 오래된 버퍼 삭제
+                if self.last_frame_id is not None and self.last_frame_id in self.frame_buffer:
+                    del self.frame_buffer[self.last_frame_id]
+                continue
+
     def connect_and_modelsel(self):
         while True: 
             print("프레임 수신 대기 중...")
 
-            # JSON 데이터 수신
-            self.json_data = self.receive_json_data()
-            if self.json_data is None:
+            # 프레임 수신
+            self.frame, bg_num, br_code = self.receive_frame()
+            if self.frame is None:
                 continue
-            self.frame_base64 = self.json_data['frame']
-            self.frame_data = base64.b64decode(self.frame_base64)
-            self.frame = cv2.imdecode(np.frombuffer(self.frame_data, dtype=np.uint8), cv2.IMREAD_COLOR)
+
             self.frame = cv2.resize(self.frame, (640, 480))
+            
+            # bg_num과 br_code를 이용하여 추가적인 로직을 추가할 수 있습니다.
+            print(f"Processing frame with bg_num: {bg_num}, br_code: {br_code}")
             
             if mother_req == 10:
                 results = self.WetFloorDetect.inference_WF_Detect(self.frame)
@@ -92,7 +121,7 @@ class DManager:
                                     fontFace=cv2.FONT_HERSHEY_SIMPLEX,\
                                     fontScale=2, color=(0, 0, 255),\
                                     thickness=2)
-            
+        
             #elif mother_req == 222222: #Missing Detector
             #    self.frame = self.MissingDetect.inference_MP_Detect(self.frame)
             #    self.frame = cv2.putText(img=self.frame, text="MISSING", \
@@ -102,7 +131,6 @@ class DManager:
             #                        thickness=2)
             #
             elif mother_req == 22:
-
                 self.frame = self.MissingDetect.inference_MP_Detect2(self.frame)
                 self.frame = cv2.putText(img=self.frame, text="MISSING", \
                                     org=(30, 30), \
@@ -111,11 +139,11 @@ class DManager:
                                     thickness=2)
             
             self.d_pipe.send(self.frame)
-            cv2.imshow("camera frame", self.frame)
-            if (cv2.waitKey(1) & 0xff == ord('q')):
-                break
+            # cv2.imshow("camera frame", self.frame)
+            # if (cv2.waitKey(1) & 0xff == ord('q')):
+            #     break
                 
-        self.cap.release()
+        # self.cap.release()
         cv2.destroyAllWindows()
 
     
@@ -176,4 +204,3 @@ class DManager:
         #통신으로 프레임 받고 추론    
         connect_thread = threading.Thread(target=self.connect_and_modelsel)
         connect_thread.start()
-    
