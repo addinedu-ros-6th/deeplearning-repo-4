@@ -35,6 +35,9 @@ class DManager:
         self.frame_buffer = {}
         self.last_frame_id = None
 
+        self.gui_req = None  # GUI 요청 code (기본 상태 None)
+        self.is_identified = False # 영상에서 신고된 아이를 찾았다면 True 아니면 False
+
     def process_input(self):
         global mother_req
         
@@ -100,6 +103,17 @@ class DManager:
 
     def connect_and_modelsel(self):
         while True: 
+            # GUI 요청 확인
+            # GUI 요청이 발생하는 경우, 아래 코드에 의헤 self.gui_req 값이 변경됩니다.
+            # 기본 상태 : None
+            # 미아 얼굴 촬영됨 (이미지 새로 저장됨) : 11
+            # 부모가 보내준 얼굴을 확인 yes : 28,  No : 29
+            if self.d_pipe.poll():
+                self.gui_req = self.d_pipe.recv()
+                print(f"GUI Request : {self.gui_req}")
+            else:
+                self.gui_req = None
+
             print("프레임 수신 대기 중...")
 
             # 프레임 수신
@@ -138,13 +152,8 @@ class DManager:
                                     fontScale=2, color=(0, 0, 255),\
                                     thickness=2)
             
-            self.d_pipe.send(self.frame)
-            # cv2.imshow("camera frame", self.frame)
-            # if (cv2.waitKey(1) & 0xff == ord('q')):
-            #     break
-                
-        # self.cap.release()
-        cv2.destroyAllWindows()
+            # g-manager 에게 보낼 데이터 정리
+            self.d_pipe.send((mother_req, self.is_identified, self.frame))
 
     
     def camera_and_modelsel(self):
