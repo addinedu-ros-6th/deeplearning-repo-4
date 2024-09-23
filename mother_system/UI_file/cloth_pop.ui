@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>609</width>
+    <width>663</width>
     <height>427</height>
    </rect>
   </property>
@@ -16,8 +16,8 @@
   <widget class="QDialogButtonBox" name="spectrum_button">
    <property name="geometry">
     <rect>
-     <x>240</x>
-     <y>380</y>
+     <x>300</x>
+     <y>370</y>
      <width>341</width>
      <height>32</height>
     </rect>
@@ -42,23 +42,10 @@
     <string>Top</string>
    </property>
   </widget>
-  <widget class="QLabel" name="spectrum_image1">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>60</y>
-     <width>381</width>
-     <height>41</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>spectrum</string>
-   </property>
-  </widget>
   <widget class="QLabel" name="Bottom">
    <property name="geometry">
     <rect>
-     <x>30</x>
+     <x>10</x>
      <y>210</y>
      <width>67</width>
      <height>17</height>
@@ -68,39 +55,26 @@
     <string>bottom</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="color_select1">
+  <widget class="QPushButton" name="Red">
    <property name="geometry">
     <rect>
-     <x>30</x>
-     <y>120</y>
-     <width>71</width>
+     <x>10</x>
+     <y>100</y>
+     <width>60</width>
      <height>31</height>
     </rect>
    </property>
    <property name="text">
-    <string>button</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="color_select1_2">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>320</y>
-     <width>89</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>button</string>
+    <string>Red</string>
    </property>
   </widget>
   <widget class="QFrame" name="color1">
    <property name="geometry">
     <rect>
-     <x>450</x>
-     <y>20</y>
-     <width>120</width>
-     <height>80</height>
+     <x>10</x>
+     <y>60</y>
+     <width>601</width>
+     <height>41</height>
     </rect>
    </property>
    <property name="frameShape">
@@ -113,10 +87,10 @@
   <widget class="QFrame" name="color2">
    <property name="geometry">
     <rect>
-     <x>450</x>
-     <y>200</y>
-     <width>120</width>
-     <height>80</height>
+     <x>10</x>
+     <y>240</y>
+     <width>601</width>
+     <height>41</height>
     </rect>
    </property>
    <property name="frameShape">
@@ -126,17 +100,277 @@
     <enum>QFrame::Raised</enum>
    </property>
   </widget>
-  <widget class="QLabel" name="spectrum_image2">
+  <widget class="QPushButton" name="Orange">
    <property name="geometry">
     <rect>
-     <x>30</x>
-     <y>260</y>
-     <width>471</width>
-     <height>41</height>
+     <x>70</x>
+     <y>100</y>
+     <width>60</width>
+     <height>31</height>
     </rect>
    </property>
    <property name="text">
-    <string>spectrum</string>
+    <string>Orange</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Yellow">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>100</y>
+     <width>60</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Yellow</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Green">
+   <property name="geometry">
+    <rect>
+     <x>190</x>
+     <y>100</y>
+     <width>60</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Green</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Blue">
+   <property name="geometry">
+    <rect>
+     <x>250</x>
+     <y>100</y>
+     <width>60</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Blue</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Navy">
+   <property name="geometry">
+    <rect>
+     <x>310</x>
+     <y>100</y>
+     <width>60</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Navy</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Violet">
+   <property name="geometry">
+    <rect>
+     <x>370</x>
+     <y>100</y>
+     <width>60</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Violet</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="White">
+   <property name="geometry">
+    <rect>
+     <x>430</x>
+     <y>100</y>
+     <width>60</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>White</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Black">
+   <property name="geometry">
+    <rect>
+     <x>490</x>
+     <y>100</y>
+     <width>60</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Black</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Gray">
+   <property name="geometry">
+    <rect>
+     <x>550</x>
+     <y>100</y>
+     <width>60</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Gray</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Yellow_2">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>280</y>
+     <width>60</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Yellow</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="White_2">
+   <property name="geometry">
+    <rect>
+     <x>430</x>
+     <y>280</y>
+     <width>60</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>White</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Green_2">
+   <property name="geometry">
+    <rect>
+     <x>190</x>
+     <y>280</y>
+     <width>60</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Green</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Violet_2">
+   <property name="geometry">
+    <rect>
+     <x>370</x>
+     <y>280</y>
+     <width>60</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Violet</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Orange_2">
+   <property name="geometry">
+    <rect>
+     <x>70</x>
+     <y>280</y>
+     <width>60</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Orange</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Black_2">
+   <property name="geometry">
+    <rect>
+     <x>490</x>
+     <y>280</y>
+     <width>60</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Black</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Gray_2">
+   <property name="geometry">
+    <rect>
+     <x>550</x>
+     <y>280</y>
+     <width>60</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Gray</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Red_2">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>280</y>
+     <width>60</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Red</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Blue_2">
+   <property name="geometry">
+    <rect>
+     <x>250</x>
+     <y>280</y>
+     <width>60</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Blue</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Navy_2">
+   <property name="geometry">
+    <rect>
+     <x>310</x>
+     <y>280</y>
+     <width>60</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Navy</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Red2">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>130</y>
+     <width>60</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Red2</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Red2_2">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>310</y>
+     <width>60</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Red2</string>
    </property>
   </widget>
  </widget>
