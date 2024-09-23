@@ -14,51 +14,37 @@ import numpy as np
 
 MAX_DGRAM = 65507  # UDP의 최대 패킷 크기
 
-class VideoReceiver(QThread):
-    frame_received = pyqtSignal(QImage, str)  # QLabel로 보낼 처리된 프레임
+# class VideoReceiver(QThread):
+#     frame_received = pyqtSignal(QImage, str)  # QLabel로 보낼 처리된 프레임
+
+#     def __init__(self, gmanager,label_name,parent=None):
+#         super().__init__(parent)
+#         self.gmanager = gmanager
+#         self.label_name = label_name        
+#         self.running = True
 
 
-    def __init__(self, udp_ip, udp_port, label_name):
-        super().__init__()
-        self.udp_ip = udp_ip
-        self.udp_port = udp_port
-        self.label_name = label_name
-        
-        # 소켓 생성 및 SO_REUSEADDR 설정
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # 포트 재사용 설정
-        self.socket.bind(('0.0.0.0', self.udp_port))  # 해당 IP와 포트에 바인딩
-        self.running = True
-        self.buffer = b""  # 데이터를 받을 버퍼
+#     def run(self):
+#         while self.running:
+#             if not self.gmanager.comm_queue.empty():
+#                 frame = self.gmanager.comm_queue.get()
+#                 frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+#                 # QImage로 변환 rgb
+#                 h, w, ch = frame_rgb.shape
+#                 bytes_per_line = ch * w
+#                 q_img = QImage(frame_rgb.data, w, h, bytes_per_line, QImage.Format_RGB888)
+#                 if q_img.isNull():
+#                     print("QImage 변환 실패")
+#                 else:
+#                     print(f"QImage 변환 성공: 크기 {q_img.size()}")
 
-    def run(self):
-        while self.running:
-            try:
-                chunk, _ = self.socket.recvfrom(MAX_DGRAM)  # 데이터 수신
-                is_last_chunk = struct.unpack("B", chunk[:1])[0]  # 첫 번째 바이트로 마지막 청크 여부 확인
-                self.buffer += chunk[1:]  # 첫 번째 바이트 제외하고 버퍼에 추가
+#                 # QLabel에 이미지 설정
+#                 self.frame_received.emit(q_img, self.label_name)
 
-                if is_last_chunk:  # 마지막 청크라면
-                    frame = pickle.loads(self.buffer)  # 버퍼에서 프레임 복원
-                    self.buffer = b""  # 버퍼 초기화
-
-                    # OpenCV의 BGR 포맷을 RGB로 변환
-                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-                    # QImage로 변환 rgb
-                    h, w, ch = frame_rgb.shape
-
-                    bytes_per_line = ch * w
-                    q_img = QImage(frame_rgb.data, w, h, bytes_per_line, QImage.Format_RGB888)
-                    self.frame_received.emit(q_img, self.label_name)
-
-            except Exception as e:
-                print(f"영상 수신 오류: {e}")
-
-    def stop(self):
-        self.running = False  # 스레드 종료
-        self.socket.close()
-        self.wait()
+#     def stop(self):
+#         self.running = False  # 스레드 종료
+#         #self.socket.close()
+#         self.wait()
 
 class MainWindow(QMainWindow):
     def __init__(self, gmanager):
@@ -118,7 +104,7 @@ class MainWindow(QMainWindow):
     # find_man 창 열기
     def show_find_man(self):
         print("show_find_man 호출됨")
-        self.find_man_window = FindManWindow()
+        self.find_man_window = FindManWindow(self.gmanager)
         self.find_man_window.show()  # show()로 창을 띄움
         
     def keyPressEvent(self, event):
@@ -152,7 +138,7 @@ class InputFaceDialog(QDialog):
         # QTimer 설정하여 주기적으로 프레임 업데이트
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_frame)
-        self.timer.start(30)  # 30ms마다 업데이트
+        self.timer.start(25)  # 30ms마다 업데이트
         
         print("1")
         self.dialog_button_box = self.findChild(QDialogButtonBox, 'register_button')
@@ -400,8 +386,9 @@ class ClothPopDialog(QDialog):
             self.close()  # 다이얼로그 종료
 
 class FindManWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, gmanager):
         super().__init__()
+        self.gmanager = gmanager
 
         # find_man.ui 파일 로드
         uic.loadUi('UI_file/find_man.ui', self)
@@ -411,46 +398,37 @@ class FindManWindow(QMainWindow):
         self.goose_video2 = self.findChild(QLabel, 'goose_video2')
         self.goose_video3 = self.findChild(QLabel, 'goose_video3')
 
-        # 라즈베리파이 IP 및 포트 설정 (예시)
-        raspberry_pi_ips = ['192.168.0.32', '192.168.0.102', '192.168.45.90']  # 라즈베리파이 IP
-        udp_ports = [9999, 9999, 9999]  # 라즈베리파이에서 송출하는 포트
-
-        # 3개의 라즈베리파이로부터 영상 수신
-        self.video_threads = [
-            VideoReceiver(raspberry_pi_ips[0], udp_ports[0], 'goose_video1'),
-            VideoReceiver(raspberry_pi_ips[1], udp_ports[1], 'goose_video2'),
-            VideoReceiver(raspberry_pi_ips[2], udp_ports[2], 'goose_video3')
-        ]
-
-        # 각 스레드의 frame_received 신호를 QLabel 업데이트 함수에 연결
-        self.video_threads[0].frame_received.connect(self.update_frame)
-        self.video_threads[1].frame_received.connect(self.update_frame)
-        self.video_threads[2].frame_received.connect(self.update_frame)
-
-        # 스레드 시작
-        for thread in self.video_threads:
-            thread.start()
+        # QTimer 설정하여 주기적으로 프레임 업데이트
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_frame)
+        self.timer.start(1)  # Update every 30 milliseconds
 
     # 프레임을 QLabel에 업데이트하는 함수
-    def update_frame(self, q_img, label_name):
-        if label_name == 'goose_video1':
-            self.goose_video1.setPixmap(QPixmap.fromImage(q_img))
-        elif label_name == 'goose_video2':
-            self.goose_video2.setPixmap(QPixmap.fromImage(q_img))
-        elif label_name == 'goose_video3':
-            self.goose_video3.setPixmap(QPixmap.fromImage(q_img))
+    def update_frame(self):
+        if not self.gmanager.comm_queue.empty():
+            frame = self.gmanager.comm_queue.get()
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            h, w, ch = frame_rgb.shape
+            bytes_per_line = ch * w
+            q_img = QImage(frame_rgb.data, w, h, bytes_per_line, QImage.Format_RGB888)
+            if q_img.isNull():
+                print("QImage 변환 실패")
+            else:
+                print(f"QImage 변환 성공: 크기 {q_img.size()}")
 
-    # 창 닫을 때 스레드 종료
+            # QLabel에 이미지 설정
+            self.goose_video1.setPixmap(QPixmap.fromImage(q_img))
+
+    # 창 닫을 때 타이머 정지
     def closeEvent(self, event):
-        for thread in self.video_threads:
-            thread.stop()
+        self.timer.stop()
         event.accept()
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Q:
             QApplication.quit()  # 프로그램 종료
         else:
-            super().keyPressEvent(event) 
+            super().keyPressEvent(event)
 
 #if __name__ == '__main__':
 #  #  app = QApplication(sys.argv)
