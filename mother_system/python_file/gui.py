@@ -51,6 +51,7 @@ class MainWindow(QMainWindow):
     def __init__(self, gmanager):
         super().__init__()
         self.gmanager = gmanager
+        
 
         # main.ui 파일을 불러와서 메인 윈도우로 사용 (GUI 폴더 경로 추가)
         uic.loadUi('UI_file/main.ui', self)
@@ -96,11 +97,11 @@ class MainWindow(QMainWindow):
 
     # input_face 창 열기 및 사람찾기 버튼 클릭 시 실행
     def show_input_face(self):
-        self.input_face_dialog = InputFaceDialog(self.gmanager)
+        self.input_face_dialog = InputFaceDialog(self.gmanager, self)
         self.input_face_dialog.exec_()
 
-        if self.input_face_dialog.isHidden():
-            self.show_find_man()
+        #if self.input_face_dialog.isHidden():
+        #    self.show_find_man()
 
     # find_man 창 열기
     def show_find_man(self):
@@ -114,9 +115,11 @@ class MainWindow(QMainWindow):
 
 
 class InputFaceDialog(QDialog):
-    def __init__(self, gmanager, parent=None):
+    def __init__(self, gmanager, main_window, parent=None):
         super().__init__(parent)
         self.gmanager = gmanager
+        self.main_window = main_window  # MainWindow 인스턴스 저장
+
         
         self.face_detected_count = 0
         self.required_detection_count = 10  # 연속으로 인식되면 얼굴 저장
@@ -129,7 +132,7 @@ class InputFaceDialog(QDialog):
         self.webcam_label = self.findChild(QLabel, 'input_video')
       
         # OpenCV를 사용하여 웹캠 연결
-        self.cap = cv2.VideoCapture(2)
+        self.cap = cv2.VideoCapture(0)
 
         # 얼굴 인식을 위한 Haar Cascade XML 파일 경로 설정
         
@@ -157,13 +160,11 @@ class InputFaceDialog(QDialog):
             face_frame = frame  # 현재 프레임을 저장
             self.save_face_image(face_frame)# 얼굴 저장 함수 호출 
             self.cap.release()
-            print("저장 완료")   
-        
-        
+            print("저장 완료")    
         else :
             print("프레임을 읽어오지 못함", ret)
-            
-        self.show_cloth_pop_dialog()
+            self.show_cloth_pop_dialog()########################지울 부분
+
 
     def accept(self):
         self.clean_up()
@@ -287,7 +288,7 @@ class InputFaceDialog(QDialog):
 
     # cloth_pop 다이얼로그 열기
     def show_cloth_pop_dialog(self):
-        self.cloth_pop_dialog = ClothPopDialog()
+        self.cloth_pop_dialog = ClothPopDialog(self.main_window)
         self.cloth_pop_dialog.exec_()  # exec_()로 다이얼로그 띄움
         self.close()
 
@@ -304,12 +305,13 @@ class InputFaceDialog(QDialog):
 
 
 class ClothPopDialog(QDialog):
-    def __init__(self):
+    def __init__(self, main_window):  # main_window를 받아옴
         super().__init__()
+        self.main_window = main_window  # main_window 저장
 
         self.top_color = None
         self.bottom_color = None
-        
+
         # cloth_pop.ui 파일 로드
         uic.loadUi('UI_file/cloth_pop.ui', self)
 
@@ -346,7 +348,7 @@ class ClothPopDialog(QDialog):
 
         # Bottom 버튼들
         bottom_buttons = {
-            'Red_2': 'red.png', 
+            'Red_2': 'red.png',
             'Orange_2': 'orange.png',
             'Yellow_2': 'yellow.png',
             'Green_2': 'green.png',
@@ -372,11 +374,16 @@ class ClothPopDialog(QDialog):
             button.clicked.connect(self.set_color)
 
         # QDialogButtonBox 찾기
-        self.dialog_button_box = self.findChild(QDialogButtonBox, 'register_button')
+        self.dialog_button_box = self.findChild(QDialogButtonBox, 'spectrum_button')
 
         # OK 버튼 누르면 find_man 창 열기
         if self.dialog_button_box is not None:
             self.dialog_button_box.accepted.connect(self.show_find_man)
+            self.dialog_button_box.rejected.connect(self.cancel_cloth)
+
+    def cancel_cloth(self):
+        print("cancel cloth")
+        self.reject()
 
     def set_color(self):
         button = self.sender()
@@ -391,6 +398,14 @@ class ClothPopDialog(QDialog):
             self.top_color = object_name.lower()
             print(f"top_color: {self.top_color}")
         # 색상 설정 관련 코드 생략
+
+    # find_man 창 열기
+    def show_find_man(self):
+        if isinstance(self.main_window, MainWindow):
+            self.main_window.show_find_man()  # MainWindow의 show_find_man 메서드 호출
+        else:
+            print("MainWindow 인스턴스가 아님")
+        self.close()
 
 
 
@@ -417,6 +432,11 @@ class FindManWindow(QMainWindow):
         self.timer.start(1)  # Update every 30 milliseconds
         
         self.find_button.accepted.connect(self.show_check_man)
+        self.find_button.rejected.connect(self.cancel_findman)
+        
+    def cancel_findman(self) :
+        print("cancel findman!0")
+        self.close()
 
         
     def show_check_man(self) :
@@ -484,7 +504,11 @@ class checkManDialog(QDialog) :
         
         #버튼 수락 시 show_tracking_man호출
         self.check_button.accepted.connect(self.show_tracking_man)
-        self.check_button.reject.connect(self.cancel_button)
+        self.check_button.rejected.connect(self.cancel_button)
+        
+    def cancel_button(self) :
+        print("push cancel!!")
+        self.reject()
         
     def show_tracking_man(self) :
         print("Tracking_man.ui 실행")

@@ -18,7 +18,7 @@ import os
 from deepface import DeepFace
 from DeepSortTracker import DeepSortTrack
 
-"""
+"""q
 missing_face_2(deepface&yolo로 임베딩 후 aws rekognition 더블체크)로 하셔야합니다.
 AWS 95% 이상 나오면, 한 번 캠쳐해서 check_images에 저장(27번 코드 송출)
 """
