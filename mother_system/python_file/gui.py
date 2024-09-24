@@ -141,7 +141,7 @@ class InputFaceDialog(QDialog):
         self.webcam_label = self.findChild(QLabel, 'input_video')
       
         # OpenCV를 사용하여 웹캠 연결
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(3)
         if self.cap :
             print("camera on")
         else :
@@ -570,7 +570,6 @@ class checkManDialog(QDialog) :
         else :
             print("no search check_image")
         
-        #버튼 수락 시 show_tracking_man호출
         self.check_button.accepted.connect(self.find_yes_man)
         self.check_button.rejected.connect(self.cancel_button)
         
