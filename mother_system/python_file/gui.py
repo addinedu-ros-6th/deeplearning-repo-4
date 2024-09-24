@@ -144,11 +144,15 @@ class InputFaceDialog(QDialog):
         self.timer.timeout.connect(self.update_frame1)
         self.timer.start(25)  # 30ms마다 업데이트
         
-        print("1")
+        print("촬영시작")
         self.dialog_button_box = self.findChild(QDialogButtonBox, 'register_button')
         self.dialog_button_box.accepted.connect(self.save_current_frame)
+        self.dialog_button_box.rejected.connect(self.cancel_inputface)
         
-        print("2") 
+    def cancel_inputface(self) :
+        print("cancel_input_face")
+        self.reject()
+        
         
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Q:
@@ -377,9 +381,9 @@ class ClothPopDialog(QDialog):
         self.dialog_button_box = self.findChild(QDialogButtonBox, 'spectrum_button')
 
         # OK 버튼 누르면 find_man 창 열기
-        if self.dialog_button_box is not None:
-            self.dialog_button_box.accepted.connect(self.show_find_man)
-            self.dialog_button_box.rejected.connect(self.cancel_cloth)
+        #if self.dialog_button_box is not None:
+        self.dialog_button_box.accepted.connect(self.show_find_man)
+        self.dialog_button_box.rejected.connect(self.cancel_cloth)
 
     def cancel_cloth(self):
         print("cancel cloth")
