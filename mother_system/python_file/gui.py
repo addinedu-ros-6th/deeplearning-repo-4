@@ -336,7 +336,7 @@ class ClothPopDialog(QDialog):
                 # 각 버튼에 맞는 이미지 배경 설정
                 button.setStyleSheet(f"""
                     QPushButton {{
-                        background-image: url(/home/lim/dev_ws/git_ws/deeplearning-repo-4/mother_system/etc_images/{image});
+                        background-image: url(./etc_images/{image});
                         background-repeat: no-repeat;
                         background-position: center;
                         border: none;
@@ -363,7 +363,7 @@ class ClothPopDialog(QDialog):
                 # 각 버튼에 맞는 이미지 배경 설정
                 button.setStyleSheet(f"""
                     QPushButton {{
-                        background-image: url(/home/lim/dev_ws/git_ws/deeplearning-repo-4/mother_system/etc_images/{image});
+                        background-image: url(./etc_images/{image});
                         background-repeat: no-repeat;
                         background-position: center;
                         border: none;
@@ -417,9 +417,10 @@ class FindManWindow(QMainWindow):
         self.timer.start(1)  # Update every 30 milliseconds
         
         self.find_button.accepted.connect(self.show_check_man)
-    
+
         
     def show_check_man(self) :
+        
         print("check_man.ui실행")
         self.check_man_dialog = checkManDialog(self.gmanager, self)
         self.check_man_dialog.show()
@@ -483,6 +484,7 @@ class checkManDialog(QDialog) :
         
         #버튼 수락 시 show_tracking_man호출
         self.check_button.accepted.connect(self.show_tracking_man)
+        self.check_button.reject.connect(self.cancel_button)
         
     def show_tracking_man(self) :
         print("Tracking_man.ui 실행")
