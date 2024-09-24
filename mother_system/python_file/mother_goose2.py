@@ -34,7 +34,7 @@ ANIMATION_DURATION = 8000  # 창 크기 조정 애니메이션 지속 시간 (�
 FRAME_WIDTH = 640
 FRAME_HEIGHT = 480
 
-mother_req = 23
+mother_req = 11
 stop_event = threading.Event()
 
 class DManager:
@@ -57,6 +57,8 @@ class DManager:
         self.last_frame_id = None
 
         self.gui_req = None  # GUI 요청 code (기본 상태 None)
+        self.top_color = ""
+        self.buttom_color = ""
         self.is_identified = False # 영상에서 신고된 아이를 찾았다면 True 아니면 False
 
         self.location_key_cls_and_color_value = {}
@@ -127,15 +129,27 @@ class DManager:
                 continue
 
     def connect_and_modelsel(self):
+        global mother_req
         while True: 
             # GUI 요청 확인
             # GUI 요청이 발생하는 경우, 아래 코드에 의헤 self.gui_req 값이 변경됩니다.
             # 기본 상태 : None
             # 미아 얼굴 촬영됨 (이미지 새로 저장됨) : 11
             # 부모가 보내준 얼굴을 확인 yes : 28,  No : 29
+   
             if self.d_pipe.poll():
-                self.gui_req = self.d_pipe.recv()
-                print(f"GUI Request : {self.gui_req}")
+                req_num, data = self.d_pipe.recv()
+                print(f"req_num: {req_num}, data: {data}")
+                
+                if self.gui_req == 11:
+                    mother_req = 11
+                    self.top_color = data["top_color"]
+                    self.buttom_color = data["buttom_color"]
+                    print(f"GUI Request : {self.gui_req}, Top: {self.top_color}, Bottom: {self.bottom} ")
+                elif self.gui_req == 28:
+                    print("Mather Accept!!")
+                elif self.gui_req == 29:
+                    print("Mother Reject!!")
             else:
                 self.gui_req = None
 

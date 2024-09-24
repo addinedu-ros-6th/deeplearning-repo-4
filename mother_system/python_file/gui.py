@@ -104,8 +104,12 @@ class MainWindow(QMainWindow):
         #    self.show_find_man()
 
     # find_man 창 열기
-    def show_find_man(self):
+    def show_find_man(self, top_color, bottom_color):
         print("show_find_man 호출됨")
+
+        if (top_color is not None) and (bottom_color is not None): 
+            self.gmanager.from_gui_queue.put((11, {"top_color": top_color, "bottom_color": bottom_color})) # 11: 미아 사진 및 의상 색상 정보 입력 완료 코드
+
         self.find_man_window = FindManWindow(self.gmanager)
         self.find_man_window.show()  # show()로 창을 띄움
         
@@ -280,7 +284,6 @@ class InputFaceDialog(QDialog):
         #timestamp = 사진 정보 저장
         #file_path = os.path.join(save_dir, f'face_{timestamp}.jpg')
         file_path = os.path.join(save_dir,'face_image.jpg')#이미지 경로
-        self.gmanager.from_gui_queue.put(11) # 11: 미아 사진 등록 완료 코드
 
         # 이미지 저장
         cv2.imwrite(file_path, frame)
@@ -381,9 +384,10 @@ class ClothPopDialog(QDialog):
         self.dialog_button_box = self.findChild(QDialogButtonBox, 'spectrum_button')
 
         # OK 버튼 누르면 find_man 창 열기
-        #if self.dialog_button_box is not None:
-        self.dialog_button_box.accepted.connect(self.show_find_man)
-        self.dialog_button_box.rejected.connect(self.cancel_cloth)
+
+        if self.dialog_button_box is not None:
+            self.dialog_button_box.accepted.connect(lambda: self.show_find_man(self.top_color, self.bottom_color))
+            self.dialog_button_box.rejected.connect(self.cancel_cloth)
 
     def cancel_cloth(self):
         print("cancel cloth")
@@ -404,9 +408,9 @@ class ClothPopDialog(QDialog):
         # 색상 설정 관련 코드 생략
 
     # find_man 창 열기
-    def show_find_man(self):
+    def show_find_man(self, top_color, bottom_color):
         if isinstance(self.main_window, MainWindow):
-            self.main_window.show_find_man()  # MainWindow의 show_find_man 메서드 호출
+            self.main_window.show_find_man(top_color, bottom_color)  # MainWindow의 show_find_man 메서드 호출
         else:
             print("MainWindow 인스턴스가 아님")
         self.close()
@@ -512,10 +516,13 @@ class checkManDialog(QDialog) :
         
     def cancel_button(self) :
         print("push cancel!!")
+
+        self.gmanager.from_gui_queue.put((29, None)) # 29: 부모 No 버튼 클릭
         self.reject()
         
     def show_tracking_man(self) :
         print("Tracking_man.ui 실행")
+        self.gmanager.from_gui_queue.put((28, None)) # 8: 부모 Yes 버튼 클릭
         self.tracking_man_window = TrackingManWindow(self.gmanager, self.main_window)
         self.tracking_man_window.show()
         self.close() # Dialog 종료
