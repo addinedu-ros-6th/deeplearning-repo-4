@@ -141,15 +141,13 @@ class InputFaceDialog(QDialog):
         self.webcam_label = self.findChild(QLabel, 'input_video')
       
         # OpenCV를 사용하여 웹캠 연결
-<<<<<<< HEAD
+
         self.cap = cv2.VideoCapture(2)
-=======
-        self.cap = cv2.VideoCapture(3)
+
         if self.cap :
             print("camera on")
         else :
             print("not find camera")
->>>>>>> 53c83bb673998cc14b7465c45dccc697943302f0
 
         # 얼굴 인식을 위한 Haar Cascade XML 파일 경로 설정
         
