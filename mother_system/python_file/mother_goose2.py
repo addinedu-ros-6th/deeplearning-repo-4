@@ -155,6 +155,7 @@ class DManager:
                     self.bottom_color = data["bottom_color"]
                     print(f"GUI Request : {self.gui_req}, Top: {self.top_color}, Bottom: {self.bottom_color} ")
                 elif self.gui_req == 28:
+                    mother_req = 28
                     print("Mather Accept!!")
                 elif self.gui_req == 29:
                     print("Mother Reject!!")
@@ -229,20 +230,13 @@ class DManager:
                     self.motor_track_id = self.find_id(self.information, face_center, self.motor_track_id)
                     print('추적대상 : ', self.motor_track_id)
 
-                elif mother_req == 24:
+                elif mother_req == 28:
                     self.frame, self.id_key_location_value = self.Tracker.run_tracking(self.frame)
                     self.frame, self.location_key_cls_and_color_value = self.MissingDetect.inference_MP_Detect2(self.frame)
-                    self.frame = cv2.putText(img=self.frame, text="MISSING", \
-                                        org=(30, 30), \
-                                        fontFace=cv2.FONT_HERSHEY_SIMPLEX,\
-                                        fontScale=2, color=(0, 0, 255),\
-                                        thickness=2)
 
                     self.information = self.merge_information(self.id_key_location_value, self.location_key_cls_and_color_value)
                     print(self.information)        
-
-                # elif mother_req == 40:
-                #     self.frame = self.MissingFace.face_similarity(self.frame)
+                    print('추적대상 : ', self.motor_track_id)
 
                 # g-manager 에게 보낼 데이터 정리
                 self.d_pipe.send((mother_req, self.is_identified, self.frame))

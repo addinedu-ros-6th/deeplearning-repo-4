@@ -38,7 +38,7 @@ class Missing_face:
             # 참조 이미지의 얼굴 임베딩 생성
             self.ref_embedding = DeepFace.represent(
                 img_path=reference_image,
-                model_name='Facenet512',
+                model_name='Facenet',
                 enforce_detection=False
             )[0]["embedding"]
 
@@ -76,7 +76,7 @@ class Missing_face:
                     try:
                         face_embedding = DeepFace.represent(
                             img_path=face_image,
-                            model_name='Facenet512',
+                            model_name='Facenet',
                             enforce_detection=False
                         )[0]["embedding"]
                         #print("Face embedding generated successfully")
