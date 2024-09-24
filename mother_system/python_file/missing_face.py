@@ -21,7 +21,7 @@ class Missing_face:
         try:
             self.ref_embedding = DeepFace.represent(
                 img_path=self.reference_image,
-                model_name='Facenet',
+                model_name='Facenet512',
                 enforce_detection=False
             )[0]["embedding"]
 
@@ -58,7 +58,7 @@ class Missing_face:
                     try:
                         face_embedding = DeepFace.represent(
                             img_path=face_image,
-                            model_name='Facenet',
+                            model_name='Facenet512',
                             enforce_detection=False
                         )[0]["embedding"]
 

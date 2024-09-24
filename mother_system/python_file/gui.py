@@ -141,7 +141,7 @@ class InputFaceDialog(QDialog):
         self.webcam_label = self.findChild(QLabel, 'input_video')
       
         # OpenCV를 사용하여 웹캠 연결
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(2)
 
         # 얼굴 인식을 위한 Haar Cascade XML 파일 경로 설정
         
@@ -577,9 +577,9 @@ class checkManDialog(QDialog) :
         self.label.setFont(font)
         
     def find_yes_man(self) :
-        print("push cancel!!")
-        self.main_window.add_log("계속 탐색할게용~!!!!!!!~~~~!!~~~~~!!!!")
+
         self.main_window.log_clear()
+        self.main_window.add_log("찾았다~~얄리~!!!!!!!~~~~!!~~~~~!!!!")
         self.gmanager.from_gui_queue.put((28, None)) # 8: 부모 Yes 버튼 클릭
         self.tracking_man_window = TrackingManWindow(self.gmanager, self.main_window)
         self.reject()

@@ -235,7 +235,7 @@ class DManager:
                     self.frame, self.location_key_cls_and_color_value = self.MissingDetect.inference_MP_Detect2(self.frame)
 
                     self.information = self.merge_information(self.id_key_location_value, self.location_key_cls_and_color_value)
-                    print(self.information)        
+                    #print(self.information)        
                     print('추적대상 : ', self.motor_track_id)
 
                 # g-manager 에게 보낼 데이터 정리
