@@ -94,7 +94,7 @@ class Missing_face:
                         similarity = (cosine_similarity + 1) / 2 * 100
 
                         # 유사도가 88% 이상인 경우 AWS Rekognition으로 확인
-                        if similarity >= 93:
+                        if similarity >= 90:
                             # 얼굴 이미지를 AWS Rekognition에 보낼 수 있도록 인코딩
                             encode_format = '.jpg' if self.image_format == 'jpg' else '.png'
                             _, face_buffer = cv2.imencode(encode_format, face_image)

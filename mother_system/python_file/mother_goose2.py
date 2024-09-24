@@ -158,6 +158,7 @@ class DManager:
                     mother_req = 28
                     print("Mather Accept!!")
                 elif self.gui_req == 29:
+                    mother_req = 23
                     print("Mother Reject!!")
             else:
                 self.gui_req = 0
