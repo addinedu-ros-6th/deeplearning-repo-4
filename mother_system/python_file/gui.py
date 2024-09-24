@@ -1,7 +1,10 @@
 from PyQt5 import uic
-from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QLabel, QDialogButtonBox, QPushButton, QFrame
-from PyQt5.QtGui import QPixmap, QImage,QLinearGradient, QPainter, QColor
-from PyQt5.QtCore import QTimer, QThread, pyqtSignal, Qt 
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QDialog, 
+                             QLabel, QDialogButtonBox,
+                             QPushButton, QFrame, QVBoxLayout,
+                             QTextEdit,QGraphicsOpacityEffect)
+from PyQt5.QtGui import QPixmap, QImage,QLinearGradient, QPainter, QColor, QFont
+from PyQt5.QtCore import QTimer, QThread, pyqtSignal, Qt ,QPropertyAnimation
 import cv2
 import queue
 import sys
@@ -128,7 +131,7 @@ class InputFaceDialog(QDialog):
 
         
         self.face_detected_count = 0
-        self.required_detection_count = 10  # 연속으로 인식되면 얼굴 저장
+        self.required_detection_count = 5  # 연속으로 인식되면 얼굴 저장
         self.center_tolerance = 50  # 중앙으로부터 50픽셀 내의 얼굴만 저장
 
         # input_face.ui 파일 로드
@@ -199,6 +202,7 @@ class InputFaceDialog(QDialog):
         ret, frame = self.cap.read()
         
         if ret == True:
+            frame = cv2.flip(frame, 1)
             original_frame = frame.copy() # 얼굴 바운딩 박스 제거하
             
             frame_height, frame_width = frame.shape[:2]
@@ -341,18 +345,33 @@ class ClothPopDialog(QDialog):
             'Black': 'black.png',
             'Gray': 'gray.png'
         }
+
+
+        
         for name, image in top_buttons.items():
             button = self.findChild(QPushButton, name)
             if button:
                 # 각 버튼에 맞는 이미지 배경 설정
-                button.setStyleSheet(f"""
-                    QPushButton {{
-                        background-image: url(./etc_images/{image});
-                        background-repeat: no-repeat;
-                        background-position: center;
-                        border: none;
-                    }}
-                """)
+                if name == 'Black' :
+                    button.setStyleSheet(f"""
+                        QPushButton {{
+                            background-image: url(./etc_images/{image});
+                            background-repeat: no-repeat;
+                            background-position: center;
+                            border: none;
+                            color : white;
+                        }}
+                    """)
+                else :
+                    button.setStyleSheet(f"""
+                        QPushButton {{
+                            background-image: url(./etc_images/{image});
+                            background-repeat: no-repeat;
+                            background-position: center;
+                            border: none;
+                            color : black;
+                        }}
+                    """)
             button.clicked.connect(self.set_color)
 
         # Bottom 버튼들
@@ -372,14 +391,26 @@ class ClothPopDialog(QDialog):
             button = self.findChild(QPushButton, name)
             if button:
                 # 각 버튼에 맞는 이미지 배경 설정
-                button.setStyleSheet(f"""
-                    QPushButton {{
-                        background-image: url(./etc_images/{image});
-                        background-repeat: no-repeat;
-                        background-position: center;
-                        border: none;
-                    }}
-                """)
+                if name == 'Black_2' :
+                    button.setStyleSheet(f"""
+                        QPushButton {{
+                            background-image: url(./etc_images/{image});
+                            background-repeat: no-repeat;
+                            background-position: center;
+                            border: none;
+                            color : white;
+                        }}
+                    """)
+                else :
+                    button.setStyleSheet(f"""
+                        QPushButton {{
+                            background-image: url(./etc_images/{image});
+                            background-repeat: no-repeat;
+                            background-position: center;
+                            border: none;
+                            color : black;
+                        }}
+                    """)
             button.clicked.connect(self.set_color)
 
         # QDialogButtonBox 찾기
@@ -433,8 +464,21 @@ class FindManWindow(QMainWindow):
         self.goose_video2 = self.findChild(QLabel, 'goose_video2')
         self.goose_video3 = self.findChild(QLabel, 'goose_video3')
         
-        self.find_button = self.findChild(QDialogButtonBox, 'find_button')
+        self.close_button = self.findChild(QPushButton, 'close_button')
         
+        self.status_widget = self.findChild(QTextEdit, 'status_log')
+        
+        self.find_button = self.findChild(QDialogButtonBox, 'find_button')
+        self.minimap = self.findChild(QLabel, 'minimap')
+        
+        pix_minimap = QPixmap('./etc_images/Maple_Mini_map.png')
+        
+        if self.minimap is not None :
+            self.minimap.setPixmap(pix_minimap)
+        else :
+            print("no search label")
+        
+        self.close_button.clicked.connect(self.close)
 
         # QTimer 설정하여 주기적으로 프레임 업데이트
         self.timer = QTimer(self)
@@ -443,6 +487,16 @@ class FindManWindow(QMainWindow):
         
         self.find_button.accepted.connect(self.show_check_man)
         self.find_button.rejected.connect(self.cancel_findman)
+        self.add_log("탐색을~~~~~~~시작~~~~~~!!!~~~~~~~~~하겠습니다~~~~~~~~~~~!!!!!!!!!!!")
+        
+    def update_log(self) :
+        self.add_log("로그 업데이트---")
+        
+    def add_log(self, message) :
+        self.status_widget.append(message)
+        
+    def log_clear(self) :
+        self.status_widget.clear()
         
     def cancel_findman(self) :
         print("cancel findman!0")
@@ -513,14 +567,27 @@ class checkManDialog(QDialog) :
             print("no search check_image")
         
         #버튼 수락 시 show_tracking_man호출
-        self.check_button.accepted.connect(self.show_tracking_man)
+        self.check_button.accepted.connect(self.find_yes_man)
         self.check_button.rejected.connect(self.cancel_button)
+        
+        self.label = self.findChild(QLabel, 'label')
+        font = QFont()
+        font.setPointSize(16)
+        font.setBold(True)
+        self.label.setFont(font)
         
     def cancel_button(self) :
         print("push cancel!!")
 
         self.gmanager.from_gui_queue.put((29, None)) # 29: 부모 No 버튼 클릭
         self.reject()
+        
+    def cancel_button(self) :
+        self.main_window.log_clear()
+        print("push cancel!!")
+        self.main_window.add_log("계속 탐색할게용~!!!!!!!~~~~!!~~~~~!!!!")
+        self.reject()
+        
         
     def show_tracking_man(self) :
         print("Tracking_man.ui 실행")

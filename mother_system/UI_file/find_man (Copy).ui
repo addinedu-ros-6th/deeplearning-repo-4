@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1119</width>
-    <height>738</height>
+    <width>1001</width>
+    <height>644</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -47,11 +47,24 @@
      </item>
     </layout>
    </widget>
-   <widget class="QPushButton" name="close_button">
+   <widget class="QLabel" name="goose_video2">
     <property name="geometry">
      <rect>
-      <x>1070</x>
-      <y>20</y>
+      <x>840</x>
+      <y>130</y>
+      <width>131</width>
+      <height>121</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>video_2</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="back_button">
+    <property name="geometry">
+     <rect>
+      <x>960</x>
+      <y>10</y>
       <width>31</width>
       <height>31</height>
      </rect>
@@ -60,13 +73,26 @@
      <string>&lt;-</string>
     </property>
    </widget>
+   <widget class="QLabel" name="goose_video3">
+    <property name="geometry">
+     <rect>
+      <x>840</x>
+      <y>350</y>
+      <width>131</width>
+      <height>121</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>video_3</string>
+    </property>
+   </widget>
    <widget class="QTextBrowser" name="textBrowser">
     <property name="geometry">
      <rect>
       <x>0</x>
       <y>10</y>
       <width>131</width>
-      <height>511</height>
+      <height>541</height>
      </rect>
     </property>
     <property name="html">
@@ -81,10 +107,10 @@ p, li { white-space: pre-wrap; }
    <widget class="QLabel" name="goose_video1">
     <property name="geometry">
      <rect>
-      <x>180</x>
-      <y>30</y>
-      <width>741</width>
-      <height>481</height>
+      <x>160</x>
+      <y>100</y>
+      <width>640</width>
+      <height>480</height>
      </rect>
     </property>
     <property name="text">
@@ -127,8 +153,8 @@ p, li { white-space: pre-wrap; }
    <widget class="QDialogButtonBox" name="find_button">
     <property name="geometry">
      <rect>
-      <x>940</x>
-      <y>650</y>
+      <x>820</x>
+      <y>560</y>
       <width>166</width>
       <height>25</height>
      </rect>
@@ -137,29 +163,13 @@ p, li { white-space: pre-wrap; }
      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
     </property>
    </widget>
-   <widget class="QTextEdit" name="status_log">
-    <property name="geometry">
-     <rect>
-      <x>100</x>
-      <y>580</y>
-      <width>561</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="autoFillBackground">
-     <bool>true</bool>
-    </property>
-    <property name="readOnly">
-     <bool>true</bool>
-    </property>
-   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1119</width>
+     <width>1001</width>
      <height>22</height>
     </rect>
    </property>

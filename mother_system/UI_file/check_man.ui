@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>220</x>
-     <y>460</y>
+     <y>480</y>
      <width>201</width>
      <height>51</height>
     </rect>
@@ -33,13 +33,38 @@
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>20</y>
+     <y>90</y>
      <width>661</width>
-     <height>401</height>
+     <height>351</height>
     </rect>
    </property>
    <property name="text">
     <string>frame</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>80</x>
+     <y>20</y>
+     <width>661</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="layoutDirection">
+    <enum>Qt::LeftToRight</enum>
+   </property>
+   <property name="autoFillBackground">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>이 사람이 맞나요~~~??????~~~~~~??~??~~~~~~~~~~~~~??????</string>
+   </property>
+   <property name="textFormat">
+    <enum>Qt::AutoText</enum>
+   </property>
+   <property name="scaledContents">
+    <bool>false</bool>
    </property>
   </widget>
  </widget>
