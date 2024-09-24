@@ -66,7 +66,7 @@ class Missing_face:
                 #print(f"Box coordinates: {x1}, {y1}, {x2}, {y2}, Confidence: {conf}")
 
                 # 신뢰도 임계값 확인
-                if conf > 0.65:
+                if conf > 0.65 :
                     print(f"Face detected with confidence: {conf}")
 
                     # 얼굴 영역 추출
@@ -104,7 +104,6 @@ class Missing_face:
                             response = self.rekognition_client.compare_faces(
                                 SourceImage={'Bytes': open(self.reference_image_path, 'rb').read()},
                                 TargetImage=face_bytes,
-                                SimilarityThreshold=93  # 유사도 기준값 설정
                             )
 
                             # Rekognition 결과 처리
