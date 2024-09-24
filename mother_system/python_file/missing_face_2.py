@@ -38,7 +38,7 @@ class Missing_face:
             # 참조 이미지의 얼굴 임베딩 생성
             self.ref_embedding = DeepFace.represent(
                 img_path=reference_image,
-                model_name='Facenet',
+                model_name='Facenet512',
                 enforce_detection=False
             )[0]["embedding"]
 
@@ -54,7 +54,7 @@ class Missing_face:
         self.frame = frame
         # YOLOv8을 사용하여 얼굴 검출
         results = self.model(self.frame)
-        center = None
+        face_center = None
         # 결과에서 얼굴 박스 추출
         for result in results:
             boxes = result.boxes  # 바운딩 박스 리스트
@@ -76,7 +76,7 @@ class Missing_face:
                     try:
                         face_embedding = DeepFace.represent(
                             img_path=face_image,
-                            model_name='Facenet',
+                            model_name='Facenet512',
                             enforce_detection=False
                         )[0]["embedding"]
                         #print("Face embedding generated successfully")
@@ -94,7 +94,7 @@ class Missing_face:
                         similarity = (cosine_similarity + 1) / 2 * 100
 
                         # 유사도가 88% 이상인 경우 AWS Rekognition으로 확인
-                        if similarity >= 95:
+                        if similarity >= 93:
                             # 얼굴 이미지를 AWS Rekognition에 보낼 수 있도록 인코딩
                             encode_format = '.jpg' if self.image_format == 'jpg' else '.png'
                             _, face_buffer = cv2.imencode(encode_format, face_image)
@@ -104,7 +104,7 @@ class Missing_face:
                             response = self.rekognition_client.compare_faces(
                                 SourceImage={'Bytes': open(self.reference_image_path, 'rb').read()},
                                 TargetImage=face_bytes,
-                                SimilarityThreshold=95  # 유사도 기준값 설정
+                                SimilarityThreshold=93  # 유사도 기준값 설정
                             )
 
                             # Rekognition 결과 처리
@@ -115,7 +115,7 @@ class Missing_face:
                                     cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                                     cv2.putText(frame, f'Double-check By AWS: {similarity_by_aws:.2f}%', (x1, y1 - 10),
                                                 cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
-                                    center = ((x1 + x2)/2, (y1+y2)/2)
+                                    face_center = ((x1 + x2)/2, (y1+y2)/2)
                                     #print(f"얼굴 일치: AWS 유사도 {similarity_by_aws:.2f}%")
 
                                     # AWS 유사도가 95% 이상이고 캡쳐가 아직 안되었다면 이미지 저장
@@ -138,4 +138,4 @@ class Missing_face:
                         cv2.rectangle(self.frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
                         cv2.putText(self.frame, 'Error processing face', (x1, y1 - 10),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
-        return self.frame, center
+        return self.frame, face_center
