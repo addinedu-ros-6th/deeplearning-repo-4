@@ -576,23 +576,27 @@ class checkManDialog(QDialog) :
         font.setBold(True)
         self.label.setFont(font)
         
+    def find_yes_man(self) :
+        print("push cancel!!")
+        self.main_window.add_log("계속 탐색할게용~!!!!!!!~~~~!!~~~~~!!!!")
+        self.main_window.log_clear()
+        self.gmanager.from_gui_queue.put((28, None)) # 8: 부모 Yes 버튼 클릭
+        self.tracking_man_window = TrackingManWindow(self.gmanager, self.main_window)
+        self.reject()
+        
     def cancel_button(self) :
         print("push cancel!!")
-
+        self.main_window.add_log("계속 탐색할게용~!!!!!!!~~~~!!~~~~~!!!!")
+        self.main_window.log_clear()
         self.gmanager.from_gui_queue.put((29, None)) # 29: 부모 No 버튼 클릭
         self.reject()
         
-    def cancel_button(self) :
-        self.main_window.log_clear()
-        print("push cancel!!")
-        self.main_window.add_log("계속 탐색할게용~!!!!!!!~~~~!!~~~~~!!!!")
-        self.reject()
         
         
-    def show_tracking_man(self) :
-        print("Tracking_man.ui 실행")
-        self.gmanager.from_gui_queue.put((28, None)) # 8: 부모 Yes 버튼 클릭
-        self.tracking_man_window = TrackingManWindow(self.gmanager, self.main_window)
+    #def show_tracking_man(self) :
+    #    print("Tracking_man.ui 실행")
+    #    self.gmanager.from_gui_queue.put((28, None)) # 8: 부모 Yes 버튼 클릭
+    #    self.tracking_man_window = TrackingManWindow(self.gmanager, self.main_window)
         self.tracking_man_window.show()
         self.close() # Dialog 종료
         
