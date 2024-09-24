@@ -97,6 +97,8 @@ class MainWindow(QMainWindow):
 
     # input_face 창 열기 및 사람찾기 버튼 클릭 시 실행
     def show_input_face(self):
+        self.gmanager.from_gui_queue.put((1, None))
+
         self.input_face_dialog = InputFaceDialog(self.gmanager, self)
         self.input_face_dialog.exec_()
 

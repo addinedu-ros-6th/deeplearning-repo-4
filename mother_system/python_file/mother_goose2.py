@@ -17,6 +17,7 @@ import boto3
 import os
 from deepface import DeepFace
 from DeepSortTracker import DeepSortTrack
+import time
 
 """q
 missing_face_2(deepface&yolo로 임베딩 후 aws rekognition 더블체크)로 하셔야합니다.
@@ -34,7 +35,10 @@ ANIMATION_DURATION = 8000  # 창 크기 조정 애니메이션 지속 시간 (�
 FRAME_WIDTH = 640
 FRAME_HEIGHT = 480
 
-mother_req = 11
+# mother_req 값에 따른 변경 모드
+# 0  : 모든 딥러닝 모델은 동작 하지 않고 데이터 전송에 필요한 loop 만 돌음
+# 23 : 모든 딥러닝 모델 동작
+mother_req = 0
 stop_event = threading.Event()
 
 class DManager:
@@ -58,23 +62,23 @@ class DManager:
 
         self.gui_req = None  # GUI 요청 code (기본 상태 None)
         self.top_color = ""
-        self.buttom_color = ""
+        self.bottom_color = ""
         self.is_identified = False # 영상에서 신고된 아이를 찾았다면 True 아니면 False
 
         self.location_key_cls_and_color_value = {}
         self.id_key_location_value = {}
         self.motor_track_id = None
 
-    def process_input(self):
-        global mother_req
+    # def process_input(self):
+    #     global mother_req
         
-        while True:
-            try:
-                mother_req =22
-                if mother_req == 1 or mother_req == 2:
-                    pass
-            except ValueError:
-                print("올바른 숫자를 입력하세요.")
+    #     while True:
+    #         try:
+    #             mother_req =22
+    #             if mother_req == 1 or mother_req == 2:
+    #                 pass
+    #         except ValueError:
+    #             print("올바른 숫자를 입력하세요.")
     
     def receive_frame(self):
         """
@@ -136,105 +140,112 @@ class DManager:
             # 기본 상태 : None
             # 미아 얼굴 촬영됨 (이미지 새로 저장됨) : 11
             # 부모가 보내준 얼굴을 확인 yes : 28,  No : 29
+
+            print(f"mother_req : {mother_req}, gui_req: {self.gui_req}")
    
             if self.d_pipe.poll():
-                req_num, data = self.d_pipe.recv()
-                print(f"req_num: {req_num}, data: {data}")
+                self.gui_req, data = self.d_pipe.recv()
+                print(f"req_num: {self.gui_req}, data: {data}")
                 
-                if self.gui_req == 11:
-                    mother_req = 11
+                if self.gui_req == 1:
+                    print("Find Missing Child is requested!!")
+                elif self.gui_req == 11:
+                    mother_req = 23
                     self.top_color = data["top_color"]
-                    self.buttom_color = data["buttom_color"]
-                    print(f"GUI Request : {self.gui_req}, Top: {self.top_color}, Bottom: {self.bottom} ")
+                    self.bottom_color = data["bottom_color"]
+                    print(f"GUI Request : {self.gui_req}, Top: {self.top_color}, Bottom: {self.bottom_color} ")
                 elif self.gui_req == 28:
                     print("Mather Accept!!")
                 elif self.gui_req == 29:
                     print("Mother Reject!!")
             else:
-                self.gui_req = None
+                self.gui_req = 0
 
-            print("프레임 수신 대기 중...")
+            if mother_req == 0 and self.gui_req == 0:
+                time.sleep(0.01)  # 모든 모델 동작 X 10ms 대기
+            else:
+                print("프레임 수신 대기 중...")
 
-            # 프레임 수신
-            self.frame, bg_num, br_code = self.receive_frame()
-            if self.frame is None:
-                continue
-            self.location_key_cls_and_color_value = {}
-            self.frame = cv2.resize(self.frame, (640, 480))
-            
-            # bg_num과 br_code를 이용하여 추가적인 로직을 추가할 수 있습니다.
-            print(f"Processing frame with bg_num: {bg_num}, br_code: {br_code}")
-            
-            if mother_req == 10:
-                results = self.WetFloorDetect.inference_WF_Detect(self.frame)
-                annotated_frame = results[0].plot()
-                resized_frame = cv2.resize(annotated_frame, (640, 480))
-                self.frame = cv2.putText(img=resized_frame, text="WetFloor", \
-                                    org=(30, 30), \
-                                    fontFace=cv2.FONT_HERSHEY_SIMPLEX,\
-                                    fontScale=2, color=(0, 0, 255),\
-                                    thickness=2)
-            
-            if mother_req == 11:
-                image_path = './face_images/face_image.jpg'
-                if self.MissingFace.load_reference_image(image_path):
-                    print("참조 이미지 임베딩이 성공적으로 생성되었습니다.")
-                    self.frame = self.MissingFace.face_similarity(self.frame)
+                # 프레임 수신
+                self.frame, bg_num, br_code = self.receive_frame()
+                if self.frame is None:
+                    continue
+                self.location_key_cls_and_color_value = {}
+                self.frame = cv2.resize(self.frame, (640, 480))
 
-                else:
-                    print("참조 이미지 로딩에 실패했습니다.")
+                # bg_num과 br_code를 이용하여 추가적인 로직을 추가할 수 있습니다.
+                print(f"Processing frame with bg_num: {bg_num}, br_code: {br_code}")
+
+                if mother_req == 10:
+                    results = self.WetFloorDetect.inference_WF_Detect(self.frame)
+                    annotated_frame = results[0].plot()
+                    resized_frame = cv2.resize(annotated_frame, (640, 480))
+                    self.frame = cv2.putText(img=resized_frame, text="WetFloor", \
+                                        org=(30, 30), \
+                                        fontFace=cv2.FONT_HERSHEY_SIMPLEX,\
+                                        fontScale=2, color=(0, 0, 255),\
+                                        thickness=2)
+
+                elif mother_req == 11:
+                    image_path = './face_images/face_image.jpg'
+                    if self.MissingFace.load_reference_image(image_path):
+                        print("참조 이미지 임베딩이 성공적으로 생성되었습니다.")
+                        self.frame = self.MissingFace.face_similarity(self.frame)
+
+                    else:
+                        print("참조 이미지 로딩에 실패했습니다.")
 
 
-            #
-            elif mother_req == 22:
-                self.frame,self.location_key_cls_and_color_value = self.MissingDetect.inference_MP_Detect2(self.frame)
-                self.frame = cv2.putText(img=self.frame, text="MISSING", \
-                                    org=(30, 30), \
-                                    fontFace=cv2.FONT_HERSHEY_SIMPLEX,\
-                                    fontScale=2, color=(0, 0, 255),\
-                                    thickness=2)
+                #
+                elif mother_req == 22:
+                    self.frame,self.location_key_cls_and_color_value = self.MissingDetect.inference_MP_Detect2(self.frame)
+                    self.frame = cv2.putText(img=self.frame, text="MISSING", \
+                                        org=(30, 30), \
+                                        fontFace=cv2.FONT_HERSHEY_SIMPLEX,\
+                                        fontScale=2, color=(0, 0, 255),\
+                                        thickness=2)
 
-                print(self.location_key_cls_and_color_value)
+                    print(self.location_key_cls_and_color_value)
 
-            elif mother_req == 23:
-                self.frame, self.id_key_location_value = self.Tracker.run_tracking(self.frame)
-                self.frame, self.location_key_cls_and_color_value = self.MissingDetect.inference_MP_Detect2(self.frame)
-                # self.frame = cv2.putText(img=self.frame, text="MISSING", \
-                #                     org=(30, 30), \
-                #                     fontFace=cv2.FONT_HERSHEY_SIMPLEX,\
-                #                     fontScale=2, color=(0, 0, 255),\
-                #                     thickness=2)
-                
-                image_path = './face_images/face_image.jpg'
-                if self.MissingFace.load_reference_image(image_path):
-                    print("참조 이미지 임베딩이 성공적으로 생성되었습니다.")
-                    self.frame, face_center = self.MissingFace.face_similarity(self.frame)
-                #print(self.location_key_cls_and_color_value)
-                #print(self.id_key_location_value)
-                
-                self.information = self.merge_information(self.id_key_location_value, self.location_key_cls_and_color_value)
-                print(self.information)
-                
-                self.motor_track_id = self.find_id(self.information, face_center, self.motor_track_id)
-                print('추적대상 : ', self.motor_track_id)
+                elif mother_req == 23:
+                    self.frame, self.id_key_location_value = self.Tracker.run_tracking(self.frame)
+                    self.frame, self.location_key_cls_and_color_value = self.MissingDetect.inference_MP_Detect2(self.frame)
+                    # self.frame = cv2.putText(img=self.frame, text="MISSING", \
+                    #                     org=(30, 30), \
+                    #                     fontFace=cv2.FONT_HERSHEY_SIMPLEX,\
+                    #                     fontScale=2, color=(0, 0, 255),\
+                    #                     thickness=2)
 
-            elif mother_req == 24:
-                self.frame, self.id_key_location_value = self.Tracker.run_tracking(self.frame)
-                self.frame, self.location_key_cls_and_color_value = self.MissingDetect.inference_MP_Detect2(self.frame)
-                self.frame = cv2.putText(img=self.frame, text="MISSING", \
-                                    org=(30, 30), \
-                                    fontFace=cv2.FONT_HERSHEY_SIMPLEX,\
-                                    fontScale=2, color=(0, 0, 255),\
-                                    thickness=2)
-                
-                self.information = self.merge_information(self.id_key_location_value, self.location_key_cls_and_color_value)
-                print(self.information)        
+                    image_path = './face_images/face_image.jpg'
+                    if self.MissingFace.load_reference_image(image_path):
+                        print("참조 이미지 임베딩이 성공적으로 생성되었습니다.")
+                        self.frame, face_center = self.MissingFace.face_similarity(self.frame)
+                    #print(self.location_key_cls_and_color_value)
+                    #print(self.id_key_location_value)
 
-            # elif mother_req == 40:
-            #     self.frame = self.MissingFace.face_similarity(self.frame)
-     
-            # g-manager 에게 보낼 데이터 정리
-            self.d_pipe.send((mother_req, self.is_identified, self.frame))
+                    self.information = self.merge_information(self.id_key_location_value, self.location_key_cls_and_color_value)
+                    print(self.information)
+
+                    self.motor_track_id = self.find_id(self.information, face_center, self.motor_track_id)
+                    print('추적대상 : ', self.motor_track_id)
+
+                elif mother_req == 24:
+                    self.frame, self.id_key_location_value = self.Tracker.run_tracking(self.frame)
+                    self.frame, self.location_key_cls_and_color_value = self.MissingDetect.inference_MP_Detect2(self.frame)
+                    self.frame = cv2.putText(img=self.frame, text="MISSING", \
+                                        org=(30, 30), \
+                                        fontFace=cv2.FONT_HERSHEY_SIMPLEX,\
+                                        fontScale=2, color=(0, 0, 255),\
+                                        thickness=2)
+
+                    self.information = self.merge_information(self.id_key_location_value, self.location_key_cls_and_color_value)
+                    print(self.information)        
+
+                # elif mother_req == 40:
+                #     self.frame = self.MissingFace.face_similarity(self.frame)
+
+                # g-manager 에게 보낼 데이터 정리
+                self.d_pipe.send((mother_req, self.is_identified, self.frame))
 
     def find_id(self, information_dict, find_center, motor_track_id=None, threshold=50):
         """
