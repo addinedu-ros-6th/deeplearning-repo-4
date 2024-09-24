@@ -142,6 +142,10 @@ class InputFaceDialog(QDialog):
       
         # OpenCV를 사용하여 웹캠 연결
         self.cap = cv2.VideoCapture(0)
+        if self.cap :
+            print("camera on")
+        else :
+            print("not find camera")
 
         # 얼굴 인식을 위한 Haar Cascade XML 파일 경로 설정
         
@@ -151,7 +155,7 @@ class InputFaceDialog(QDialog):
         # QTimer 설정하여 주기적으로 프레임 업데이트
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_frame1)
-        self.timer.start(25)  # 30ms마다 업데이트
+        self.timer.start(1)  # 30ms마다 업데이트
         
         print("촬영시작")
         self.dialog_button_box = self.findChild(QDialogButtonBox, 'register_button')
@@ -630,7 +634,7 @@ class TrackingManWindow(QMainWindow) :
         
 
 #if __name__ == '__main__':
-#  #  app = QApplication(sys.argv)
+#    app = QApplication(sys.argv)
 #    window = MainWindow()
 #    window.show()
 #    sys.exit(app.exec_())
