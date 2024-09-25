@@ -21,9 +21,8 @@ import time
 
 """q
 missing_face_2(deepface&yolo로 임베딩 후 aws rekognition 더블체크)로 하셔야합니다.
-AWS 95% 이상 나오면, 한 번 캠쳐해서 check_images에 저장(27번 코드 송출)
+AWS 95% 이상 나오면, 한 번 캠쳐서 check_images에 저장(27번 코드 송출)
 """
-
 
 MAX_DGRAM = 1400  # 패킷 단편화를 방지하기 위해 패킷 크기를 줄임
 UDP_PORT = 9999
@@ -54,7 +53,14 @@ class DManager:
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.udp_socket.bind(('0.0.0.0', UDP_PORT))
-        self.udp_socket.settimeout(0.5)  # 타임아웃 설정
+        self.udp_socket.settimeout(5)  # 타임아웃 설정
+
+        # TCP 소켓 설정 (모터 움직임 데이터 전송)
+        self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.tcp_socket.bind(('0.0.0.0', TCP_PORT))
+        self.tcp_socket.listen(5)  # 최대 5개의 연결 대기
+        self.tcp_socket.settimeout(1)  # 비차단 모드 설정 (타임아웃으로 대체)
     
         # 프레임 버퍼 초기화
         self.frame_buffer = {}
@@ -68,6 +74,28 @@ class DManager:
         self.location_key_cls_and_color_value = {}
         self.id_key_location_value = {}
         self.motor_track_id = None
+
+        # **모터 움직임 계산을 위한 인스턴스 변수 초기화**
+        self.loop_counter = 0
+        self.loop_threshold = 2
+        self.move_twice_counter = 0
+        self.move_twice_limit = 8
+        self.move_thrice_counter = 0
+        self.move_thrice_limit = 5
+        self.mode = 'T'  # 기본 모드는 'T' (tracking_mode)
+
+        # **원본 프레임의 크기 설정 (필요 시 조정)**
+        self.FRAME_WIDTH = 640
+        self.FRAME_HEIGHT = 480
+
+        # **원의 반지름 설정 (필요 시 조정)**
+        self.small_circle_radius = 30
+        self.medium_circle_radius = 100
+        self.large_circle_radius = 160
+        self.extra_large_circle_radius = 220
+
+        # **추적 대상 저장을 위한 리스트 초기화**
+        self.tracking_targets = []
 
     # def process_input(self):
     #     global mother_req
@@ -132,6 +160,27 @@ class DManager:
                     del self.frame_buffer[self.last_frame_id]
                 continue
 
+    def handle_tcp_connection(self, motor_data):
+        """
+        TCP 소켓을 통해 모터 데이터를 전송하는 함수. 별도의 스레드에서 실행.
+        """
+        x_mid, y_mid, move_amount = motor_data
+        print(f"x_mid : {x_mid}, y_mid : {y_mid}")
+        direction_data = {
+            "mode": self.mode,
+            "x": x_mid,
+            "y": y_mid,
+            "move": move_amount
+        }
+
+        try:
+            conn, client_address = self.tcp_socket.accept()
+            with conn:
+                conn.sendall(json.dumps(direction_data).encode('utf-8'))
+                print(f"모터 움직임 데이터 전송 완료: {direction_data}")
+        except Exception as e:
+            print(f"TCP 전송 오류: {e}")
+    
     def connect_and_modelsel(self):
         global mother_req
         while True: 
@@ -198,9 +247,8 @@ class DManager:
                         print("참조 이미지 로딩에 실패했습니다.")
 
 
-                #
                 elif mother_req == 22:
-                    self.frame,self.location_key_cls_and_color_value = self.MissingDetect.inference_MP_Detect2(self.frame)
+                    self.frame, self.location_key_cls_and_color_value = self.MissingDetect.inference_MP_Detect2(self.frame)
                     self.frame = cv2.putText(img=self.frame, text="MISSING", \
                                         org=(30, 30), \
                                         fontFace=cv2.FONT_HERSHEY_SIMPLEX,\
@@ -211,33 +259,62 @@ class DManager:
 
                 elif mother_req == 23:
                     self.frame, self.id_key_location_value = self.Tracker.run_tracking(self.frame)
-                    self.frame, self.location_key_cls_and_color_value = self.MissingDetect.inference_MP_Detect2(self.frame)
-                    # self.frame = cv2.putText(img=self.frame, text="MISSING", \
-                    #                     org=(30, 30), \
-                    #                     fontFace=cv2.FONT_HERSHEY_SIMPLEX,\
-                    #                     fontScale=2, color=(0, 0, 255),\
-                    #                     thickness=2)
+                    
+                    if self.tracking_targets:
+                        # **추적 대상이 있는 경우, Tracker만 실행**
+                        if self.motor_track_id in self.tracking_targets:
+                            if self.motor_track_id in self.id_key_location_value:
+                                # 추적대상 좌표를 사용하여 모터 컨트롤 함수 호출
+                                motor_data = self.motor_control(self.id_key_location_value[self.motor_track_id])
+                                # 모터 데이터를 별도의 스레드에서 TCP로 전송
+                                tcp_thread = threading.Thread(target=self.handle_tcp_connection, args=(motor_data,))
+                                tcp_thread.start()
+                            else:
+                                print(f"추적 대상 ID {self.motor_track_id}의 좌표가 존재하지 않습니다.")
+                                # **추적 대상이 존재하지 않을 때 모터에 좌표값을 보내지 않고 가만히 있도록 함**
+                                motor_data = (-1, -1, 0)  # x_mid, y_mid를 -1로 설정
+                                tcp_thread = threading.Thread(target=self.handle_tcp_connection, args=(motor_data,))
+                                tcp_thread.start()
+                    else:
+                        # **추적 대상이 없는 경우, 기존 로직 실행**
+                        self.frame, self.location_key_cls_and_color_value = self.MissingDetect.inference_MP_Detect2(self.frame)
+                        # self.frame = cv2.putText(img=self.frame, text="MISSING", \
+                        #                     org=(30, 30), \
+                        #                     fontFace=cv2.FONT_HERSHEY_SIMPLEX,\
+                        #                     fontScale=2, color=(0, 0, 255),\
+                        #                     thickness=2)
+                        
+                        image_path = './face_images/face_image.jpg'
+                        if self.MissingFace.load_reference_image(image_path):
+                            print("참조 이미지 임베딩이 성공적으로 생성되었습니다.")
+                            self.frame, face_center = self.MissingFace.face_similarity(self.frame)
+                            
+                            # # **face_center를 사용하여 모터 컨트롤 함수 호출**
+                            # motor_data = self.motor_control(face_center)
+                        #print(self.location_key_cls_and_color_value)
+                        #print(self.id_key_location_value)
+                        
+                        self.information = self.merge_information(self.id_key_location_value, self.location_key_cls_and_color_value)
+                        print(self.information)
+                        
+                        self.motor_track_id = self.find_id(self.information, face_center, self.motor_track_id)
+                        print('추적대상 : ', self.motor_track_id)
 
-                    image_path = './face_images/face_image.jpg'
-                    if self.MissingFace.load_reference_image(image_path):
-                        print("참조 이미지 임베딩이 성공적으로 생성되었습니다.")
-                        self.frame, face_center = self.MissingFace.face_similarity(self.frame)
-                    #print(self.location_key_cls_and_color_value)
-                    #print(self.id_key_location_value)
-
-                    self.information = self.merge_information(self.id_key_location_value, self.location_key_cls_and_color_value)
-                    print(self.information)
-
-                    self.motor_track_id = self.find_id(self.information, face_center, self.motor_track_id)
-                    print('추적대상 : ', self.motor_track_id)
+                        # **추적 대상이 설정되면 tracking_targets 리스트에 추가**
+                        if self.motor_track_id:
+                            self.tracking_targets.append(self.motor_track_id)
+                        
+                        # 모터 데이터를 별도의 스레드에서 TCP로 전송
+                        motor_data = self.motor_control(self.id_key_location_value.get(self.motor_track_id, None))
+                        tcp_thread = threading.Thread(target=self.handle_tcp_connection, args=(motor_data,))
+                        tcp_thread.start()
 
                 elif mother_req == 28:
                     self.frame, self.id_key_location_value = self.Tracker.run_tracking(self.frame)
                     self.frame, self.location_key_cls_and_color_value = self.MissingDetect.inference_MP_Detect2(self.frame)
 
                     self.information = self.merge_information(self.id_key_location_value, self.location_key_cls_and_color_value)
-                    #print(self.information)        
-                    print('추적대상 : ', self.motor_track_id)
+                    print(self.information)        
 
                 # g-manager 에게 보낼 데이터 정리
                 self.d_pipe.send((mother_req, self.is_identified, self.frame))
@@ -271,7 +348,6 @@ class DManager:
 
         return motor_track_id
 
-
     def merge_information(self, deepsort_dict, segmentation_dict, threshold=50):
         # information 딕셔너리 초기화
         information = {}
@@ -300,6 +376,62 @@ class DManager:
                             information[deep_id][2] = color
 
         return information
+
+    # **모터 컨트롤 함수 추가**
+    def motor_control(self, center):
+        """
+        center를 기반으로 모터 움직임을 계산하고 결과를 반환하는 함수.
+        """
+        # 모터 움직임 계산 (첫 번째 객체만 예시로 처리)
+        if center:
+            x_mid, y_mid = center
+            center_x, center_y = self.FRAME_WIDTH // 2, self.FRAME_HEIGHT // 2
+            distance = ((x_mid - center_x) ** 2 + (y_mid - center_y) ** 2) ** 0.5
+
+            if distance <= self.small_circle_radius:
+                move_amount = 0
+                self.move_twice_counter = 0
+                self.move_thrice_counter = 0
+            elif distance <= self.medium_circle_radius:
+                self.loop_counter += 1
+                if self.loop_counter >= self.loop_threshold:
+                    move_amount = 1
+                    self.loop_counter = 0
+                    self.move_twice_counter = 0
+                    self.move_thrice_counter = 0
+                else:
+                    move_amount = 0
+            elif distance <= self.large_circle_radius:
+                move_amount = 1
+                self.move_twice_counter = 0
+                self.move_thrice_counter = 0
+            elif distance <= self.extra_large_circle_radius:
+                if self.move_twice_counter >= self.move_twice_limit:
+                    move_amount = 1
+                else:
+                    move_amount = 2
+                    self.move_twice_counter += 1
+            else:
+                if self.move_thrice_counter >= self.move_thrice_limit:
+                    move_amount = 2
+                else:
+                    move_amount = 3
+                    self.move_thrice_counter += 1
+        else:
+            x_mid, y_mid, move_amount = -1, -1, 0
+            distance = 0
+
+        # **좌표 클램핑: x_mid가 640을 초과하면 640으로, y_mid가 480을 초과하면 480으로, x_mid가 0 미만이면 0으로, y_mid가 0 미만이면 0으로 설정**
+        x_mid = max(0, min(x_mid, 640))
+        y_mid = max(0, min(y_mid, 480))
+
+        # 결과 출력
+        print(f"Center: ({x_mid}, {y_mid})")
+        print(f"Distance from center: {distance}")
+        print(f"Move Amount: {move_amount}")
+
+        # 모터 데이터를 반환
+        return (x_mid, y_mid, move_amount)
     
     def camera_and_modelsel(self):
         self.cap = cv2.VideoCapture(0)
