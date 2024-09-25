@@ -141,7 +141,7 @@ class InputFaceDialog(QDialog):
         self.webcam_label = self.findChild(QLabel, 'input_video')
       
         # OpenCV를 사용하여 웹캠 연결
-        self.cap = cv2.VideoCapture(2)
+        self.cap = cv2.VideoCapture(0)
 
         if self.cap :
             print("camera on")

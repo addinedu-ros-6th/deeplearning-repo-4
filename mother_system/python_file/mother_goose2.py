@@ -18,6 +18,8 @@ import os
 from deepface import DeepFace
 from DeepSortTracker import DeepSortTrack
 import time
+import select
+
 
 """q
 missing_face_2(deepface&yolo로 임베딩 후 aws rekognition 더블체크)로 하셔야합니다.
@@ -26,7 +28,7 @@ AWS 95% 이상 나오면, 한 번 캠쳐서 check_images에 저장(27번 코드 
 
 MAX_DGRAM = 1400  # 패킷 단편화를 방지하기 위해 패킷 크기를 줄임
 UDP_PORT = 9999
-TCP_PORT = 8888  # 헬스 체크용 TCP 포트
+TCP_PORT = 6666  # 헬스 체크용 TCP 포트
 FRAME_WIDTH = 640  # 수신되는 영상의 너비
 FRAME_HEIGHT = 480  # 수신되는 영상의 높이
 ANIMATION_DURATION = 8000  # 창 크기 조정 애니메이션 지속 시간 (밀리초, 8초로 설정)
@@ -60,7 +62,7 @@ class DManager:
         self.tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.tcp_socket.bind(('0.0.0.0', TCP_PORT))
         self.tcp_socket.listen(5)  # 최대 5개의 연결 대기
-        self.tcp_socket.settimeout(1)  # 비차단 모드 설정 (타임아웃으로 대체)
+        self.tcp_socket.settimeout(5)
     
         # 프레임 버퍼 초기화
         self.frame_buffer = {}
@@ -174,7 +176,13 @@ class DManager:
         }
 
         try:
-            conn, client_address = self.tcp_socket.accept()
+            try:
+                conn, client_address = self.tcp_socket.accept()
+            except BlockingIOError:
+                # 소켓이 준비되지 않았을 경우 예외를 무시하고 넘어감
+                print("소켓이 아직 연결 준비가 되지 않았습니다.")
+                return
+            
             with conn:
                 conn.sendall(json.dumps(direction_data).encode('utf-8'))
                 print(f"모터 움직임 데이터 전송 완료: {direction_data}")
@@ -259,6 +267,63 @@ class DManager:
 
                 elif mother_req == 23:
                     self.frame, self.id_key_location_value = self.Tracker.run_tracking(self.frame)
+                    print("추적대상 리스트 : ", self.tracking_targets)
+
+                    if len(self.tracking_targets) > 0:
+                        # **추적 대상이 있는 경우, Tracker만 실행**
+                        if self.motor_track_id in self.tracking_targets:
+                            if self.motor_track_id in self.id_key_location_value:
+                                # 추적대상 좌표를 사용하여 모터 컨트롤 함수 호출
+                                motor_data = self.motor_control(self.id_key_location_value[self.motor_track_id])
+                                # 모터 데이터를 별도의 스레드에서 TCP로 전송
+                                tcp_thread = threading.Thread(target=self.handle_tcp_connection, args=(motor_data,))
+                                tcp_thread.start()
+                            else:
+                                print(f"추적 대상 ID {self.motor_track_id}의 좌표가 존재하지 않습니다.")
+                                # **추적 대상이 존재하지 않을 때 모터에 좌표값을 보내지 않고 가만히 있도록 함**
+                                motor_data = (-1, -1, 0)  # x_mid, y_mid를 -1로 설정
+                                self.tracking_targets = []
+                                self.motor_track_id = None
+                                tcp_thread = threading.Thread(target=self.handle_tcp_connection, args=(motor_data,))
+                                tcp_thread.start()
+                                
+                            
+                    else:
+                        # **추적 대상이 없는 경우, 기존 로직 실행**
+                        self.frame, self.location_key_cls_and_color_value = self.MissingDetect.inference_MP_Detect2(self.frame)
+                        # self.frame = cv2.putText(img=self.frame, text="MISSING", \
+                        #                     org=(30, 30), \
+                        #                     fontFace=cv2.FONT_HERSHEY_SIMPLEX,\
+                        #                     fontScale=2, color=(0, 0, 255),\
+                        #                     thickness=2)
+                        
+                        image_path = './face_images/face_image.jpg'
+                        if self.MissingFace.load_reference_image(image_path):
+                            print("참조 이미지 임베딩이 성공적으로 생성되었습니다.")
+                            self.frame, face_center = self.MissingFace.face_similarity(self.frame)
+                            
+                            # # **face_center를 사용하여 모터 컨트롤 함수 호출**
+                            # motor_data = self.motor_control(face_center)
+                        #print(self.location_key_cls_and_color_value)
+                        #print(self.id_key_location_value)
+                        
+                        self.information = self.merge_information(self.id_key_location_value, self.location_key_cls_and_color_value)
+                        print(self.information)
+                        
+                        self.motor_track_id = self.find_id(self.information, face_center, self.motor_track_id)
+                        print('추적대상 : ', self.motor_track_id)
+
+                        # **추적 대상이 설정되면 tracking_targets 리스트에 추가**
+                        if self.motor_track_id:
+                            self.tracking_targets.append(self.motor_track_id)
+                        
+                        # 모터 데이터를 별도의 스레드에서 TCP로 전송
+                        motor_data = self.motor_control(self.id_key_location_value.get(self.motor_track_id, None))
+                        tcp_thread = threading.Thread(target=self.handle_tcp_connection, args=(motor_data,))
+                        tcp_thread.start()
+
+                elif mother_req == 28:
+                    self.frame, self.id_key_location_value = self.Tracker.run_tracking(self.frame)
                     
                     if self.tracking_targets:
                         # **추적 대상이 있는 경우, Tracker만 실행**
@@ -297,24 +362,20 @@ class DManager:
                         self.information = self.merge_information(self.id_key_location_value, self.location_key_cls_and_color_value)
                         print(self.information)
                         
-                        self.motor_track_id = self.find_id(self.information, face_center, self.motor_track_id)
-                        print('추적대상 : ', self.motor_track_id)
-
                         # **추적 대상이 설정되면 tracking_targets 리스트에 추가**
                         if self.motor_track_id:
                             self.tracking_targets.append(self.motor_track_id)
                         
-                        # 모터 데이터를 별도의 스레드에서 TCP로 전송
-                        motor_data = self.motor_control(self.id_key_location_value.get(self.motor_track_id, None))
-                        tcp_thread = threading.Thread(target=self.handle_tcp_connection, args=(motor_data,))
-                        tcp_thread.start()
+                        if self.information.get(self.motor_track_id) == None:
+                            mother_req =23
+                            self.tracking_targets = []
+                        else:
+                            # 모터 데이터를 별도의 스레드에서 TCP로 전송
+                            # motor_data = self.motor_control(self.id_key_location_value.get(self.motor_track_id, None))
+                            # tcp_thread = threading.Thread(target=self.handle_tcp_connection, args=(motor_data,))
+                            # tcp_thread.start()      
+                            pass
 
-                elif mother_req == 28:
-                    self.frame, self.id_key_location_value = self.Tracker.run_tracking(self.frame)
-                    self.frame, self.location_key_cls_and_color_value = self.MissingDetect.inference_MP_Detect2(self.frame)
-
-                    self.information = self.merge_information(self.id_key_location_value, self.location_key_cls_and_color_value)
-                    print(self.information)        
 
                 # g-manager 에게 보낼 데이터 정리
                 self.d_pipe.send((mother_req, self.is_identified, self.frame))
