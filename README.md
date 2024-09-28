@@ -80,8 +80,8 @@
 [![스크린샷 2024-09-28 170848](https://github.com/user-attachments/assets/3442e56d-91f6-44ab-b388-d19e9f3a842e)](https://www.youtube.com/watch?v=H0P24YpGDXE)
 
 * 학습 결과 영상2
-[![스크린샷 2024-09-28 171942](https://github.com/user-attachments/assets/0adec5ba-a576-4d0b-9665-4989d13e2af6)(https://www.youtube.com/watch?v=YqKes7pbTkk)
-]
+[![스크린샷 2024-09-28 171942](https://github.com/user-attachments/assets/0adec5ba-a576-4d0b-9665-4989d13e2af6)](https://www.youtube.com/watch?v=YqKes7pbTkk)
+
 
 ### 3.2 Face Detection & Recognition
 #### YOLOv8-face
