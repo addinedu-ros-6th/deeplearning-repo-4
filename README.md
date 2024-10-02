@@ -28,6 +28,10 @@
 
 ![sw_diagram](https://github.com/user-attachments/assets/7612e9aa-8028-4bb0-abe0-2289dc0fdeee)
 
+### 2.2 State Machine
+![state_machine drawio](https://github.com/user-attachments/assets/82c26493-39e9-468f-9cd4-2d4fb4b52b00)
+
+
 ## 3. 활용 기술
 | 항목 | 사용 기능 |
 |-----|----------|
@@ -38,9 +42,18 @@
 |컴퓨터 비전 & 딥러닝|<img src="https://github.com/user-attachments/assets/e4c87c04-00cd-4869-ab0c-609d98c08e48" alt="opencv" style="width: 100px; height: 30;"> <img src="https://github.com/user-attachments/assets/3ddfb6ed-a0e6-46e8-b5c9-142a96eda3d9" alt="yolo8" style="width: 80px; height: 30;"> <img src="https://github.com/user-attachments/assets/9ef310af-a57f-4242-8dfe-c723591355ef" alt="movenet" style="width: 130px; height: 30;"> <img src="https://github.com/user-attachments/assets/4048bef5-36ae-4859-bc93-d45a08fa450d" alt="deepsort" style="width: 150px; height: 30;"> <img src="https://github.com/user-attachments/assets/66db1d2a-8971-4d2f-b581-3839d918cb42" alt="rekognition" style="width: 150px; height: 30;"> <img src="https://github.com/user-attachments/assets/be9077da-a3ba-4f5a-99cb-fe3e631219cb" alt="deeface" style="width: 110px; height: 30;">
 |Database|<img src="https://github.com/user-attachments/assets/8d88dd9a-ff7d-4c33-a5ec-36a066b21685" alt="RDS" style="width: 90px; height: 30;">|
 
-## 3. 딥러닝
-### 3.1 전이 학습
-### 3.1.1 Movenet - Fall Down Detection
+## 4. 팀원 소개
+| 이름 | 담당 |
+|-------|------------|
+|임성렬|▶ Multi-Thread 적용,  다중 영상 출력 화면 동작 최적화<br>▶ GUI와 딥러닝 모델 간 실시간 데이터 통신 구조 구현<br>▶ 클라이언트-서버 간 통신 프로토콜 설계 및 데이터 처리 구현<br>▶ (실종자 얼굴 등록) OpenCV 활용 자동 얼굴 인식, 촬영 및 작업 전환 최적화 구현|
+|이세형|▶ UDP binary data header & packet 분할 설계 및 client-server 통신(UDP 및 TCP/IP) 최적화 구현<br>▶ Client (Baby goose) <br>  &emsp;- Processor 구축 / HW 제어 로직 구현 <br>▶ Server (Mother goose) <br>  &emsp;- 데이터 전달 Troubleshooting 및 성능 개선<br>▶데이터베이스 생성 및 구축 |
+|김주영|▶ 젖은 바닥 탐지 딥러닝 모델 탐색 및 구현 <br>  &emsp;- (탐색) SAM2, YOLO CLS, MASK R-CNN<br>  &emsp; -(구현) YOLOv8 Detect <br>▶ Conv2D, TF-MoveNet 기반 낙상 감지 모델 전이학습 <br>&emsp;- 34,172 프레임 이미지와 10개의 클래스 사용<br>▶ YOLOv8-face(인식)와 DeepFace(임베딩 추출), AWS Rekognition 활용한 얼굴 유사도 검출 모델 구현 <br>▶ Re-ID를 위한 실시간 DeepSort Tracker 구현|
+|김보성|▶ 얼굴 인식 프로세스 성능 개선을 위한 다양한 딥러닝 모델 테스트 (DeepFace , InsightFace)<br>▶ Tracker (deepsort) 검출 이미지와 등록 정보 (clothes seg, face recognition) 비교 및 단일 객체 생성 알고리즘 구현 <br>▶ 딥러닝 프로세스를 통합하고 관리 프로세스 (Dmanager) 작성<br>▶ Jira 및 Confluence협업 툴을 활용하여 일정 관리 및 작업 내역관리|
+|윤용곤 <br>(팀장)|▶ 개념 설계 문서 작성 <br>  &emsp;- State Machine, HW/SW Diagram, 통신 프로토콜, ERD<br>▶ Server (Mother goose)<br>  &emsp;- 딥러닝 & GUI 구동 Multi-process 기본 구조 및 프로세스간  데이터 전달 구현 <br>▶ YOLOv8s-seg 전이학습으로 상의/하의 segmentation 훈련 및 해당 모델을 사용한 의상 색상 분류 구현 <br>▶ 발표자료, README.md 작성 및 발표|
+
+## 5. 딥러닝
+### 5.1 전이 학습
+### 5.1.1 Movenet - Fall Down Detection
 
 #### Movenet
 * 사람의 17개 주요 관절(코, 어깨, 엉덩이, 무릎 등) 실시간으로 추적하는 고속 추적 모델
@@ -55,12 +68,11 @@
 * 영상 Dataset 을 사용, 각 영상에 대한 10개 class Label 을 부여하여 학습을 진행, 최종적으로 ‘Falling’ class 검출 사용 
 * Data Size : 64 X 64 , 34,172 frames
 * Class : Drinking, Eating, Exercising, Falling, Reading, Sitting, Sleeping, Standing, Unknown, Walking
-* 학습 결과
+* 학습 결과 영상
 [![image](https://github.com/user-attachments/assets/aae859de-bc7e-482e-8ad9-c22d3bdbb572)
 ](https://www.youtube.com/watch?v=3YcNn8kiVh8)
-* 학습 결과 영상
-* 
-### 3.1.2 YOLOv8n - Wet Floor Detection
+
+### 5.1.2 YOLOv8n - Wet Floor Detection
 #### 학습
 
 * 6,784장의 wet floor 이미지 사용하여 전이학습 진행
@@ -71,7 +83,7 @@
 
 [![스크린샷 2024-09-28 171509](https://github.com/user-attachments/assets/a4a317d6-8776-4ba7-97b6-af6bdac29cc3)](https://www.youtube.com/watch?v=yUxwa1hmskQ)
 
-### 3.1.3 YOLOv8s-seg - Clothes Segmentation
+### 5.1.3 YOLOv8s-seg - Clothes Segmentation
 #### 학습
 * 6,405장의 의상 이미지 사용하여 전이학습 진행
 * class : 0: one-piece, 1: top, 2: under
@@ -83,7 +95,7 @@
 [![스크린샷 2024-09-28 171942](https://github.com/user-attachments/assets/0adec5ba-a576-4d0b-9665-4989d13e2af6)](https://www.youtube.com/watch?v=YqKes7pbTkk)
 
 
-### 3.2 Face Detection & Recognition
+### 5.2 Face Detection & Recognition
 #### YOLOv8-face
 * YOLOv8 기반 얼굴 감지를 목적으로 훈련된 모델
 * 작은 메모리 및 자원 소모, 실시간 처리에 적합
@@ -104,16 +116,16 @@
 *[Image Source: inkistyle.com](https://inkistyle.com/wp-content/uploads/2022/11/221112-IVE-Fashion-Incheon-Airport-1.jpg
 )*
 
-### 3.3 Rear Time DeepSort for Re-Identification
+### 5.3 Rear Time DeepSort for Re-Identification
 #### DeepSortTracker
 * 객체 탐지 모델 + 임베딩 모델 -> 실시간 다중 객체 추적 및 Re-Identification(재식별)을 수행
 * 각 객체에 고유 ID를 부여하고, 추적 및 재식별
 
-#### 3.3.1 객체 탐지 : RetinaNet ResNet50 FPN v2
+#### 5.3.1 객체 탐지 : RetinaNet ResNet50 FPN v2
 * RetinaNet은 이중 피라미드 네트워크(FPN) 구조를 통해 멀티스케일 객체 탐지
 * Fast-RNN 대비 높은 정확도, 실시간성 확인
 
-#### 3.3.2 객체 임베딩 : OSNet-AIN x1.0
+#### 5.3.2 객체 임베딩 : OSNet-AIN x1.0
 * 다중 스케일의 특징을 학습하여 다양한 환경 변화와 시점 차이에도 강력한 재식별 성능 제공
 * Adaptive Instance Normalization (AIN): 각 객체의 스타일 차이를 보정하여 일관된 특징 추출이 가능
 
@@ -127,10 +139,10 @@
   
 <img src="https://github.com/user-attachments/assets/45ed3c35-6a4b-473e-9403-75985109ce99" alt="lego" style="width: 250px; height: auto;">|
 
-## 4. 시스템 동작
+## 6. 시스템 동작
 
 ![gui](https://github.com/user-attachments/assets/e25f3807-b5cf-4f65-b9c0-2201ab83c00f)
 
-## 5. 동작영상 
+## 7. 동작영상 
 [![스크린샷 2024-09-28 182248](https://github.com/user-attachments/assets/ea0bedaa-e362-4add-b5d7-f648ec6206fa)](https://www.youtube.com/watch?v=ptQEoJdGH7c)
 [![스크린샷 2024-09-28 182218](https://github.com/user-attachments/assets/f9d7aa30-6603-44b1-875d-018ff2fb2884)](https://www.youtube.com/watch?v=swjwcJ5nP4I)
