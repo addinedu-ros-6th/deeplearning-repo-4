@@ -28,7 +28,7 @@
 
 ![sw_diagram](https://github.com/user-attachments/assets/7612e9aa-8028-4bb0-abe0-2289dc0fdeee)
 
-### 2.2 State Machine
+### 2.3 State Machine
 ![state_machine drawio](https://github.com/user-attachments/assets/82c26493-39e9-468f-9cd4-2d4fb4b52b00)
 
 
