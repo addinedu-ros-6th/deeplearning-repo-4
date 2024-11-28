@@ -25,8 +25,7 @@
 ![스크린샷 2024-11-28 100707](https://github.com/user-attachments/assets/2662fd20-25f1-49b8-858b-0087ac1cdbdd)
 
 ### 1.3 협업 Confluence 페이지
-![스크린샷 2024-11-28 101139](https://github.com/user-attachments/assets/2900295b-dbd4-4f94-bdca-96f239af9ac4)
-
+![conf2](https://github.com/user-attachments/assets/4fecfad8-af14-4ca3-aed7-9aac97ad5400)
 ## 2. 시스템 구성도
 ### 2.1 HW 구성도
 
