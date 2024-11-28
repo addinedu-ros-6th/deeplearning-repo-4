@@ -156,3 +156,4 @@
 ## 7. 동작영상 
 [![스크린샷 2024-09-28 182248](https://github.com/user-attachments/assets/ea0bedaa-e362-4add-b5d7-f648ec6206fa)](https://www.youtube.com/watch?v=ptQEoJdGH7c)
 [![스크린샷 2024-09-28 182218](https://github.com/user-attachments/assets/f9d7aa30-6603-44b1-875d-018ff2fb2884)](https://www.youtube.com/watch?v=swjwcJ5nP4I)
+
