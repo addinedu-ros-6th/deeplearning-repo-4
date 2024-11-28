@@ -3,7 +3,10 @@
 
 # Title : 찾아라! 얄리
 
-## 1. 기능 리스트
+## 1. 프로젝트 기획
+  * 영상에서 미아 찾기 (주어진 조건의 사람을 영상에서 찾기) 및 추적, 다양한 이벤트 (젖은 바닥, 쓰러진 사람)을 자동으로 검출하는 딥러닝 프로세스를 개발 
+
+### 1.1 기능 리스트
 
 | 항목 | 세부 기능 |
 |-----|----------|
@@ -14,9 +17,15 @@
 | 5. 실종자 재추적 | 재추적 |
 | 6. 실종 중장자 발견시 체크 기능 | 자동확인 얼굴 보호자 재확인<br>&ensp;• True: 실종자 매칭 성공<br>&ensp;• False: 제외 목록추가 (재 탐지 방지) |
 | 7. 실종자 안내 기능 | 보호자가 로봇 위치로 오서 로봇에게 안내 받음<br>&ensp;• Baby Goose GUI 직업 안로 버튼 클릭 |
-| 8. 공항 순찰 기능 | 순찰 항목<br>&ensp;• 쓰러진 사람 (우선순위 1)<br>&ensp;• 졸은 바닥 (우선순위 2) |
+| 8. 공항 순찰 기능 | 순찰 항목<br>&ensp;• 쓰러진 사람 (우선순위 1)<br>&ensp;• 젖은 바닥 (우선순위 2) |
 | 9. 순찰 이벤트 감지 대응 기능 | 주변 알림<br>&ensp;• Baby Goose GUI 직업 알림 강화임<br>&ensp;• 이벤트 발생 message 표시<br>  &ensp;&ensp; * 쓰러진 사람<br>  &ensp;&ensp; * 젖은 바닥 |
 | 10. 순찰 이벤트 종료 기능 | 담당자 완결(로봇 위치) 조치 후 상황 종료 입력<br>&ensp;• Baby Goose GUI 직업 안로 버튼 클릭 |
+
+### 1.2 프로젝트 일정
+![스크린샷 2024-11-28 100707](https://github.com/user-attachments/assets/2662fd20-25f1-49b8-858b-0087ac1cdbdd)
+
+### 1.3 협업 Confluence 페이지
+![스크린샷 2024-11-28 101139](https://github.com/user-attachments/assets/2900295b-dbd4-4f94-bdca-96f239af9ac4)
 
 ## 2. 시스템 구성도
 ### 2.1 HW 구성도
@@ -30,6 +39,7 @@
 
 ### 2.3 State Machine
 ![state_machine drawio](https://github.com/user-attachments/assets/82c26493-39e9-468f-9cd4-2d4fb4b52b00)
+
 
 
 ## 3. 활용 기술

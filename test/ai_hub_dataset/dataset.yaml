@@ -1,0 +1,15 @@
+path: ../YOLODataset/
+train: images/train
+val: images/val
+test:
+
+names:
+    0: jacket #2
+    1: jumper #3
+    2: 13 #13
+    3: cardigan #4
+    4: bottom #12
+    5: blouse #5
+    6: sweater #7
+    7: coat #1
+    8: shirt #8
