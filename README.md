@@ -13,7 +13,7 @@
 | 1. 공항 구역 안내 기능 | 사용자에게 공항 구역 안내 기능 |
 | 2. 실종 접수 기능 | 접수 항목<br>&ensp;• 사진 (필수)<br>&ensp;• 의상정보<br>  &ensp;&ensp; *  상의 (색상 코드값)<br>  &ensp;&ensp; * 하의 (색상 코드값) |
 | 3. 실종자 탐지 | 접수 정보에 일치하는 사람 자동 확인<br>&ensp;• 확인 기준 (얼굴: 95%) |
-| 4. 실종자 추적 | 탐지 이후의 동선감<br>• 추적 실패 기준: 확인이 3초이상 사라진 경우 중단된 |
+| 4. 실종자 추적 | 탐지 이후의 동선감<br>• 추적 실패 기준: 확인이 3초이상 사라진 경우 추적을 종료 |
 | 5. 실종자 재추적 | 재추적 |
 | 6. 탐지 인물 일치여부 보호자 확인 | 탐지된 얼굴을 보호자 재확인<br>&ensp;• True: 실종자 매칭 성공<br>&ensp;• False: 제외 목록추가 (재 탐지 방지) |
 | 7. 실종자 안내 기능 | 보호자가 발견위치를 확인하고 이동<br>&ensp;• 실종자 인계 이후 Baby Goose GUI 작업 완료 버튼 클릭 |
@@ -58,7 +58,7 @@
 |이세형|▶ UDP binary data header & packet 분할 설계 및 client-server 통신(UDP 및 TCP/IP) 최적화 구현<br>▶ Client (Baby goose) <br>  &emsp;- Processor 구축 / HW 제어 로직 구현 <br>▶ Server (Mother goose) <br>  &emsp;- 데이터 전달 Troubleshooting 및 성능 개선<br>▶데이터베이스 생성 및 구축 |
 |김주영|▶ 젖은 바닥 탐지 딥러닝 모델 탐색 및 구현 <br>  &emsp;- (탐색) SAM2, YOLO CLS, MASK R-CNN<br>  &emsp; -(구현) YOLOv8 Detect <br>▶ Conv2D, TF-MoveNet 기반 낙상 감지 모델 전이학습 <br>&emsp;- 34,172 프레임 이미지와 10개의 클래스 사용<br>▶ YOLOv8-face(인식)와 DeepFace(임베딩 추출), AWS Rekognition 활용한 얼굴 유사도 검출 모델 구현 <br>▶ Re-ID를 위한 실시간 DeepSort Tracker 구현|
 |김보성|▶ 얼굴 인식 프로세스 성능 개선을 위한 다양한 딥러닝 모델 테스트 (DeepFace , InsightFace)<br>▶ Tracker (deepsort) 검출 이미지와 등록 정보 (clothes seg, face recognition) 비교 및 단일 객체 생성 알고리즘 구현 <br>▶ 딥러닝 프로세스를 통합하고 관리 프로세스 (Dmanager) 작성<br>▶ Jira 및 Confluence협업 툴을 활용하여 일정 관리 및 작업 내역관리|
-|윤용곤 <br>(팀장)|▶ 개념 설계 문서 작성 <br>  &emsp;- State Machine, HW/SW Diagram, 통신 프로토콜, ERD<br>▶ Server (Mother goose)<br>  &emsp;- 딥러닝 & GUI 구동 Multi-process 기본 구조 및 프로세스간  데이터 전달 구현 <br>▶ YOLOv8s-seg 전이학습으로 상의/하의 segmentation 훈련 및 해당 모델을 사용한 의상 색상 분류 구현 <br>▶ 발표자료, README.md 작성 및 발표|
+|윤용곤 <br>(팀장)|▶ YOLOv8s-seg 전이학습으로 상의/하의 segmentation 훈련 및 해당 모델을 사용한 의상 색상 분류 구현 <br>▶ 설계 문서 작성 & 프로젝트 관리 <br>  &emsp;- 설계문서: State Machine, HW/SW Diagram, Sequence Diagram, 통신 프로토콜, ERD<br>▶ Server (Mother goose)<br>  &emsp;- 딥러닝 process 와 GUI 구동 process 가 분리된 Multi-process 시스템 구현 <br>  &emsp;- 프로젝트 관리 : 팀장 회의 참석, 발표자료, README.md 작성 및 발표<br>▶ GUI Troubleshooting : 페이지 전환, 데이터 전송 문제 해결|
 
 ## 5. 딥러닝
 ### 5.1 전이 학습
